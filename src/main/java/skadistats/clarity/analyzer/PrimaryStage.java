@@ -1,6 +1,7 @@
 package skadistats.clarity.analyzer;
 
 import javafx.scene.Scene;
+import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import skadistats.clarity.analyzer.cdi.FXMLScene;
 
@@ -18,6 +19,7 @@ public class PrimaryStage {
     public void start(Stage primaryStage) {
         this.stage = primaryStage;
         primaryStage.setTitle("Clarity Analyzer");
+        primaryStage.getIcons().add(new Image(getClass().getResourceAsStream("/images/dota_2_icon.png")));
         primaryStage.setScene(mainScene);
         primaryStage.show();
     }
