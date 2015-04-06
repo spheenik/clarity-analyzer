@@ -5,14 +5,14 @@ import javafx.beans.binding.BooleanBinding;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.Slider;
+import javafx.scene.control.*;
 import javafx.stage.FileChooser;
 import javafx.util.converter.NumberStringConverter;
 import org.controlsfx.dialog.Dialogs;
 import skadistats.clarity.analyzer.PrimaryStage;
+import skadistats.clarity.analyzer.replay.ObservableEntityList;
 import skadistats.clarity.analyzer.replay.ReplayController;
+import skadistats.clarity.model.Entity;
 
 import javax.inject.Inject;
 import java.io.File;
@@ -36,6 +36,9 @@ public class MainWindowController implements Initializable {
     @FXML
     public Label labelLastTick;
 
+    @FXML
+    public TableView<Entity> entityTable;
+
     @Inject
     private PrimaryStage primaryStage;
 
@@ -44,6 +47,9 @@ public class MainWindowController implements Initializable {
 
     @Inject
     private ReplayController replayController;
+
+    @Inject
+    private ObservableEntityList entityList;
 
     public void initialize(java.net.URL location, java.util.ResourceBundle resources) {
         BooleanBinding runnerIsNull = Bindings.createBooleanBinding(() -> replayController.getRunner() == null, replayController.runnerProperty());
@@ -59,9 +65,7 @@ public class MainWindowController implements Initializable {
             slider.setValue(newValue.intValue());
         });
         slider.valueProperty().addListener((observable, oldValue, newValue) -> {
-            if (slider.isValueChanging()) {
-                replayController.getRunner().setDemandedTick(newValue.intValue());
-            }
+            replayController.getRunner().setDemandedTick(newValue.intValue());
         });
     }
     public void actionQuit(ActionEvent actionEvent) {
@@ -90,8 +94,14 @@ public class MainWindowController implements Initializable {
         } catch (Exception e) {
             Dialogs.create().title("Error loading replay").showException(e);
         }
-    }
+        entityTable.setItems(entityList.getEntities());
 
+        TableColumn<Entity, Integer> idColumn = (TableColumn<Entity, Integer>) entityTable.getColumns().get(0);
+        idColumn.setCellValueFactory(entityList.getIndexCellFactory());
+
+        TableColumn<Entity, String> clsColumn = (TableColumn<Entity, String>) entityTable.getColumns().get(1);
+        clsColumn.setCellValueFactory(entityList.getDtClassCellFactory());
+    }
 
     public void clickPlay(ActionEvent actionEvent) {
         replayController.setPlaying(true);

@@ -9,6 +9,7 @@ import skadistats.clarity.source.MappedFileSource;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
 import java.util.Timer;
@@ -17,6 +18,9 @@ import java.util.TimerTask;
 @ApplicationScoped
 @UsesEntities
 public class ReplayController {
+
+    @Inject
+    private ObservableEntityList entityList;
 
     private class TickingTask extends TimerTask {
         @Override
@@ -32,8 +36,8 @@ public class ReplayController {
 
 
     private Property<PropertySupportRunner> runner = new SimpleObjectProperty<>();
-    private IntegerProperty tick = new SimpleIntegerProperty();
-    private IntegerProperty lastTick = new SimpleIntegerProperty();
+    private IntegerProperty tick = new SimpleIntegerProperty(0);
+    private IntegerProperty lastTick = new SimpleIntegerProperty(0);
     private BooleanProperty playing = new SimpleBooleanProperty(false);
 
     @PostConstruct
@@ -54,13 +58,14 @@ public class ReplayController {
     }
 
     public void load(File f) throws IOException, NoSuchMethodException {
-        PropertySupportRunner r = new PropertySupportRunner(new MappedFileSource(f.getAbsoluteFile()));
         haltIfRunning();
-        runner.setValue(r);
-        r.runWith(this);
-        r.setDemandedTick(0);
+        entityList.clear();
+        PropertySupportRunner r = new PropertySupportRunner(new MappedFileSource(f.getAbsoluteFile()));
         lastTick.bind(new ReadOnlyJavaBeanIntegerPropertyBuilder().bean(r).name("lastTick").build());
         tick.bind(new ReadOnlyJavaBeanIntegerPropertyBuilder().bean(r).name("tick").build());
+        runner.setValue(r);
+        r.runWith(this, entityList);
+        r.setDemandedTick(0);
     }
 
     @PreDestroy
