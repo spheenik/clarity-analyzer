@@ -11,6 +11,7 @@ import skadistats.clarity.model.Entity;
 import skadistats.clarity.model.Handle;
 import skadistats.clarity.processor.entities.OnEntityCreated;
 import skadistats.clarity.processor.entities.OnEntityDeleted;
+import skadistats.clarity.processor.entities.OnEntityUpdated;
 import skadistats.clarity.processor.reader.OnReset;
 import skadistats.clarity.processor.reader.ResetPhase;
 import skadistats.clarity.processor.runner.Context;
@@ -22,7 +23,7 @@ import java.util.ArrayList;
 @ApplicationScoped
 public class ObservableEntityList {
 
-    private final ObservableList<Entity> entities = FXCollections.observableList(new ArrayList<>(1 << Handle.INDEX_BITS));
+    private final ObservableList<WrappedEntity> entities = FXCollections.observableList(new ArrayList<>(1 << Handle.INDEX_BITS));
 
     public void clear() {
         entities.clear();
@@ -37,24 +38,30 @@ public class ObservableEntityList {
 
     @OnEntityCreated
     public void onCreate(Context ctx, Entity entity) {
-        entities.add(offsetForIndex(entity.getIndex()), entity);
+        entities.add(offsetForIndex(entity.getIndex()), new WrappedEntity(entity));
     }
+
+    @OnEntityUpdated
+    public void onUpdate(Context ctx, Entity entity, int[] indices, int num) {
+        entities.get(offsetForIndex(entity.getIndex())).fireUpdates(indices, num);
+    }
+
 
     @OnEntityDeleted
     public void onDelete(Context ctx, Entity entity) {
         entities.remove(entity);
     }
 
-    public ObservableList<Entity> getEntities() {
+    public ObservableList<WrappedEntity> getEntities() {
         return entities;
     }
 
-    public Callback<TableColumn.CellDataFeatures<Entity, Integer>, ObservableValue<Integer>> getIndexCellFactory() {
-        return param -> new ReadOnlyIntegerWrapper(param.getValue().getIndex()).asObject();
+    public Callback<TableColumn.CellDataFeatures<WrappedEntity, Integer>, ObservableValue<Integer>> getIndexCellFactory() {
+        return param -> new ReadOnlyIntegerWrapper(param.getValue().getEntity().getIndex()).asObject();
     }
 
-    public Callback<TableColumn.CellDataFeatures<Entity, String>, ObservableValue<String>> getDtClassCellFactory() {
-        return param -> new ReadOnlyStringWrapper(param.getValue().getDtClass().getDtName());
+    public Callback<TableColumn.CellDataFeatures<WrappedEntity, String>, ObservableValue<String>> getDtClassCellFactory() {
+        return param -> new ReadOnlyStringWrapper(param.getValue().getEntity().getDtClass().getDtName());
     }
 
     private int offsetForIndex(int idx) {
@@ -62,7 +69,7 @@ public class ObservableEntityList {
         int b = entities.size(); // upper bound
         while (a + 1 != b) {
             int  m = (a + b) >>> 1;
-            if (entities.get(m).getIndex() < idx) {
+            if (entities.get(m).getEntity().getIndex() < idx) {
                 a = m;
             } else {
                 b = m;

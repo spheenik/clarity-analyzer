@@ -12,7 +12,7 @@ import org.controlsfx.dialog.Dialogs;
 import skadistats.clarity.analyzer.PrimaryStage;
 import skadistats.clarity.analyzer.replay.ObservableEntityList;
 import skadistats.clarity.analyzer.replay.ReplayController;
-import skadistats.clarity.model.Entity;
+import skadistats.clarity.analyzer.replay.WrappedEntity;
 
 import javax.inject.Inject;
 import java.io.File;
@@ -37,7 +37,10 @@ public class MainWindowController implements Initializable {
     public Label labelLastTick;
 
     @FXML
-    public TableView<Entity> entityTable;
+    public TableView<WrappedEntity> entityTable;
+
+    @FXML
+    public TableView<WrappedEntity.EntityProperty> detailTable;
 
     @Inject
     private PrimaryStage primaryStage;
@@ -66,6 +69,20 @@ public class MainWindowController implements Initializable {
         });
         slider.valueProperty().addListener((observable, oldValue, newValue) -> {
             replayController.getRunner().setDemandedTick(newValue.intValue());
+        });
+
+        entityTable.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+
+            System.out.println(newValue);
+
+            TableColumn<WrappedEntity.EntityProperty, Integer> idColumn = (TableColumn<WrappedEntity.EntityProperty, Integer>) detailTable.getColumns().get(0);
+            idColumn.setCellValueFactory(newValue.getIndexCellFactory());
+            TableColumn<WrappedEntity.EntityProperty, String> nameColumn = (TableColumn<WrappedEntity.EntityProperty, String>) detailTable.getColumns().get(1);
+            nameColumn.setCellValueFactory(newValue.getNameCellFactory());
+            TableColumn<WrappedEntity.EntityProperty, String> valueColumn = (TableColumn<WrappedEntity.EntityProperty, String>) detailTable.getColumns().get(2);
+            valueColumn.setCellValueFactory(newValue.getValueCellFactory());
+
+            detailTable.setItems(newValue.getProperties());
         });
     }
     public void actionQuit(ActionEvent actionEvent) {
@@ -96,10 +113,10 @@ public class MainWindowController implements Initializable {
         }
         entityTable.setItems(entityList.getEntities());
 
-        TableColumn<Entity, Integer> idColumn = (TableColumn<Entity, Integer>) entityTable.getColumns().get(0);
+        TableColumn<WrappedEntity, Integer> idColumn = (TableColumn<WrappedEntity, Integer>) entityTable.getColumns().get(0);
         idColumn.setCellValueFactory(entityList.getIndexCellFactory());
 
-        TableColumn<Entity, String> clsColumn = (TableColumn<Entity, String>) entityTable.getColumns().get(1);
+        TableColumn<WrappedEntity, String> clsColumn = (TableColumn<WrappedEntity, String>) entityTable.getColumns().get(1);
         clsColumn.setCellValueFactory(entityList.getDtClassCellFactory());
     }
 
