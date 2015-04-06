@@ -33,7 +33,7 @@ public class ReplayController {
 
     private Property<PropertySupportRunner> runner = new SimpleObjectProperty<>();
     private IntegerProperty tick = new SimpleIntegerProperty();
-    private IntegerProperty lastTick = new ReadOnlyIntegerWrapper();
+    private IntegerProperty lastTick = new SimpleIntegerProperty();
     private BooleanProperty playing = new SimpleBooleanProperty(false);
 
     @PostConstruct
@@ -57,12 +57,10 @@ public class ReplayController {
         PropertySupportRunner r = new PropertySupportRunner(new MappedFileSource(f.getAbsoluteFile()));
         haltIfRunning();
         runner.setValue(r);
-        lastTick.unbind();
-        lastTick.bind(new ReadOnlyJavaBeanIntegerPropertyBuilder().bean(r).name("lastTick").build());
-        tick.unbind();
-        tick.bind(new ReadOnlyJavaBeanIntegerPropertyBuilder().bean(r).name("tick").build());
         r.runWith(this);
         r.setDemandedTick(0);
+        lastTick.bind(new ReadOnlyJavaBeanIntegerPropertyBuilder().bean(r).name("lastTick").build());
+        tick.bind(new ReadOnlyJavaBeanIntegerPropertyBuilder().bean(r).name("tick").build());
     }
 
     @PreDestroy

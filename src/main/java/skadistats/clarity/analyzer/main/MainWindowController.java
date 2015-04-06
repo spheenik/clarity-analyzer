@@ -54,8 +54,15 @@ public class MainWindowController implements Initializable {
         labelTick.textProperty().bindBidirectional(replayController.tickProperty(), new NumberStringConverter());
         labelLastTick.textProperty().bindBidirectional(replayController.lastTickProperty(), new NumberStringConverter());
 
-        slider.maxProperty().bindBidirectional(replayController.lastTickProperty());
-        slider.valueProperty().addListener((observable, oldValue, newValue) -> replayController.getRunner().setDemandedTick(newValue.intValue()));
+        slider.maxProperty().bind(replayController.lastTickProperty());
+        replayController.tickProperty().addListener((observable, oldValue, newValue) -> {
+            slider.setValue(newValue.intValue());
+        });
+        slider.valueProperty().addListener((observable, oldValue, newValue) -> {
+            if (slider.isValueChanging()) {
+                replayController.getRunner().setDemandedTick(newValue.intValue());
+            }
+        });
     }
     public void actionQuit(ActionEvent actionEvent) {
         primaryStage.getStage().close();
