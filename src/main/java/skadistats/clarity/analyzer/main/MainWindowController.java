@@ -13,10 +13,12 @@ import skadistats.clarity.analyzer.PrimaryStage;
 import skadistats.clarity.analyzer.replay.ObservableEntityList;
 import skadistats.clarity.analyzer.replay.ReplayController;
 import skadistats.clarity.analyzer.replay.WrappedEntity;
+import skadistats.clarity.model.FieldPath;
 
 import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
+import java.util.Map;
 import java.util.prefs.Preferences;
 
 public class MainWindowController implements Initializable {
@@ -40,7 +42,7 @@ public class MainWindowController implements Initializable {
     public TableView<WrappedEntity> entityTable;
 
     @FXML
-    public TableView<WrappedEntity.EntityProperty> detailTable;
+    public TableView<Map.Entry<FieldPath, WrappedEntity.EntityProperty>> detailTable;
 
     @Inject
     private PrimaryStage primaryStage;
@@ -75,11 +77,16 @@ public class MainWindowController implements Initializable {
 
             System.out.println(newValue);
 
-            TableColumn<WrappedEntity.EntityProperty, Integer> idColumn = (TableColumn<WrappedEntity.EntityProperty, Integer>) detailTable.getColumns().get(0);
+            TableColumn<Map.Entry<FieldPath, WrappedEntity.EntityProperty>, String> idColumn =
+                (TableColumn<Map.Entry<FieldPath, WrappedEntity.EntityProperty>, String>) detailTable.getColumns().get(0);
             idColumn.setCellValueFactory(newValue.getIndexCellFactory());
-            TableColumn<WrappedEntity.EntityProperty, String> nameColumn = (TableColumn<WrappedEntity.EntityProperty, String>) detailTable.getColumns().get(1);
+
+            TableColumn<Map.Entry<FieldPath, WrappedEntity.EntityProperty>, String> nameColumn =
+                (TableColumn<Map.Entry<FieldPath, WrappedEntity.EntityProperty>, String>) detailTable.getColumns().get(1);
             nameColumn.setCellValueFactory(newValue.getNameCellFactory());
-            TableColumn<WrappedEntity.EntityProperty, String> valueColumn = (TableColumn<WrappedEntity.EntityProperty, String>) detailTable.getColumns().get(2);
+
+            TableColumn<Map.Entry<FieldPath, WrappedEntity.EntityProperty>, String> valueColumn =
+                (TableColumn<Map.Entry<FieldPath, WrappedEntity.EntityProperty>, String>) detailTable.getColumns().get(2);
             valueColumn.setCellValueFactory(newValue.getValueCellFactory());
 
             detailTable.setItems(newValue.getProperties());

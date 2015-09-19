@@ -8,14 +8,14 @@ import javafx.collections.ObservableList;
 import javafx.scene.control.TableColumn;
 import javafx.util.Callback;
 import skadistats.clarity.model.Entity;
-import skadistats.clarity.model.Handle;
+import skadistats.clarity.model.FieldPath;
 import skadistats.clarity.processor.entities.OnEntityCreated;
 import skadistats.clarity.processor.entities.OnEntityDeleted;
 import skadistats.clarity.processor.entities.OnEntityUpdated;
 import skadistats.clarity.processor.reader.OnReset;
 import skadistats.clarity.processor.reader.ResetPhase;
 import skadistats.clarity.processor.runner.Context;
-import skadistats.clarity.wire.proto.Demo;
+import skadistats.clarity.wire.common.proto.Demo;
 
 import javax.enterprise.context.ApplicationScoped;
 import java.util.ArrayList;
@@ -23,7 +23,7 @@ import java.util.ArrayList;
 @ApplicationScoped
 public class ObservableEntityList {
 
-    private final ObservableList<WrappedEntity> entities = FXCollections.observableList(new ArrayList<>(1 << Handle.INDEX_BITS));
+    private final ObservableList<WrappedEntity> entities = FXCollections.observableList(new ArrayList<>());
 
     public void clear() {
         entities.clear();
@@ -42,8 +42,8 @@ public class ObservableEntityList {
     }
 
     @OnEntityUpdated
-    public void onUpdate(Context ctx, Entity entity, int[] indices, int num) {
-        entities.get(offsetForIndex(entity.getIndex())).fireUpdates(indices, num);
+    public void onUpdate(Context ctx, Entity entity, FieldPath[] fieldPaths, int num) {
+        entities.get(offsetForIndex(entity.getIndex())).fireUpdates(fieldPaths, num);
     }
 
 
