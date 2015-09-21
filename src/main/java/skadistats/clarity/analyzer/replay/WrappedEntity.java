@@ -11,57 +11,68 @@ import skadistats.clarity.model.Entity;
 import skadistats.clarity.model.FieldPath;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class WrappedEntity {
 
     private final Entity entity;
-    private Map<FieldPath, EntityProperty> propertyMap = new HashMap<>();
-    private ObservableList<Map.Entry<FieldPath, EntityProperty>> propertyList = FXCollections.observableArrayList(propertyMap.entrySet());
+    private ObservableList<EntityProperty> properties;
+    private Map<FieldPath, Integer> indices = new HashMap<>();
 
     public WrappedEntity(Entity entity) {
         this.entity = entity;
+        properties = FXCollections.observableArrayList();
+        List<FieldPath> fieldPaths = entity.getDtClass().collectFieldPaths(entity.getState());
+        for (FieldPath fieldPath : fieldPaths) {
+            indices.put(fieldPath, properties.size());
+            properties.add(new EntityProperty(fieldPath));
+        }
     }
 
     public Entity getEntity() {
         return entity;
     }
 
-    public ObservableList<Map.Entry<FieldPath, EntityProperty>> getProperties() {
-        return propertyList;
+    public ObservableList<EntityProperty> getProperties() {
+        return properties;
     }
 
-    public Callback<TableColumn.CellDataFeatures<Map.Entry<FieldPath, EntityProperty>, String>, ObservableValue<String>> getIndexCellFactory() {
+    public Callback<TableColumn.CellDataFeatures<EntityProperty, String>, ObservableValue<String>> getIndexCellFactory() {
         return param -> new ReadOnlyStringWrapper(
-            param.getValue().getKey().toString()
+            param.getValue().fp.toString()
         );
     }
 
-    public Callback<TableColumn.CellDataFeatures<Map.Entry<FieldPath, EntityProperty>, String>, ObservableValue<String>> getNameCellFactory() {
+    public Callback<TableColumn.CellDataFeatures<EntityProperty, String>, ObservableValue<String>> getNameCellFactory() {
         return param -> new ReadOnlyStringWrapper(
-            entity.getDtClass().getNameForFieldPath(param.getValue().getKey())
+            entity.getDtClass().getNameForFieldPath(param.getValue().fp)
         );
     }
 
-    public Callback<TableColumn.CellDataFeatures<Map.Entry<FieldPath, EntityProperty>, String>, ObservableValue<String>> getValueCellFactory() {
-        return param -> param.getValue().getValue();
+    public Callback<TableColumn.CellDataFeatures<EntityProperty, String>, ObservableValue<String>> getValueCellFactory() {
+        return param -> param.getValue();
     }
 
     public void fireUpdates(FieldPath[] fieldPaths, int num) {
-        if (propertyList == null) {
+        if (properties == null) {
             return;
         }
         for (int ci = 0; ci < num; ci++) {
-            EntityProperty ep = propertyMap.get(fieldPaths[ci]);
-            if (ep == null) {
-                // TODO: add and fire
+            Integer pi = indices.get(fieldPaths[ci]);
+            if (pi == null) {
+                pi = properties.size();
+                indices.put(fieldPaths[ci], pi);
+                properties.add(new EntityProperty(fieldPaths[ci]));
             } else {
+                EntityProperty ep = properties.get(pi);
                 ep.fire();
             }
         }
     }
 
     public class EntityProperty extends ObservableValueBase<String> {
+
         private final FieldPath fp;
 
         private EntityProperty(FieldPath fp) {
@@ -70,7 +81,7 @@ public class WrappedEntity {
 
         @Override
         public String getValue() {
-            return String.valueOf(entity.getDtClass().getValueForFieldPath(fp, entity.getState()));
+            return entity.getDtClass().getValueForFieldPath(fp, entity.getState()).toString();
         }
 
         private void fire() {
