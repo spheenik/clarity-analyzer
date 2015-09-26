@@ -29,7 +29,9 @@ public class ReplayController {
                 setPlaying(false);
                 return;
             }
-            getRunner().setDemandedTick(getTick() + 1);
+            if (!changing.getValue()) {
+                getRunner().setDemandedTick(getTick() + 1);
+            }
         }
     }
     private Timer timer;
@@ -39,6 +41,7 @@ public class ReplayController {
     private IntegerProperty tick = new SimpleIntegerProperty(0);
     private IntegerProperty lastTick = new SimpleIntegerProperty(0);
     private BooleanProperty playing = new SimpleBooleanProperty(false);
+    private BooleanProperty changing = new SimpleBooleanProperty(false);
 
     @PostConstruct
     public void init() {
@@ -121,5 +124,17 @@ public class ReplayController {
 
     public void setPlaying(boolean playing) {
         this.playing.set(playing);
+    }
+
+    public boolean getChanging() {
+        return changing.get();
+    }
+
+    public BooleanProperty changingProperty() {
+        return changing;
+    }
+
+    public void setChanging(boolean changing) {
+        this.changing.set(changing);
     }
 }

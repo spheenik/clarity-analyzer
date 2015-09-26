@@ -59,6 +59,7 @@ public class MainWindowController implements Initializable {
         buttonPlay.disableProperty().bind(runnerIsNull.or(replayController.playingProperty()));
         buttonPause.disableProperty().bind(runnerIsNull.or(replayController.playingProperty().not()));
         slider.disableProperty().bind(runnerIsNull);
+        replayController.changingProperty().bind(slider.valueChangingProperty());
 
         labelTick.textProperty().bindBidirectional(replayController.tickProperty(), new NumberStringConverter());
         labelLastTick.textProperty().bindBidirectional(replayController.lastTickProperty(), new NumberStringConverter());
@@ -74,6 +75,10 @@ public class MainWindowController implements Initializable {
         entityTable.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
 
             System.out.println(newValue);
+
+            if (newValue == null) {
+                return;
+            }
 
             TableColumn<WrappedEntity.EntityProperty, String> idColumn =
                 (TableColumn<WrappedEntity.EntityProperty, String>) detailTable.getColumns().get(0);
