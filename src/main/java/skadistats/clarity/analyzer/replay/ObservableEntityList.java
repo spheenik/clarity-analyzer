@@ -1,12 +1,8 @@
 package skadistats.clarity.analyzer.replay;
 
-import javafx.beans.property.ReadOnlyIntegerWrapper;
-import javafx.beans.property.ReadOnlyStringWrapper;
-import javafx.beans.value.ObservableValue;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.scene.control.TableColumn;
-import javafx.util.Callback;
+import javafx.application.Platform;
+import javafx.collections.ObservableListBase;
+import skadistats.clarity.model.EngineType;
 import skadistats.clarity.model.Entity;
 import skadistats.clarity.model.FieldPath;
 import skadistats.clarity.processor.entities.OnEntityCreated;
@@ -17,64 +13,105 @@ import skadistats.clarity.processor.reader.ResetPhase;
 import skadistats.clarity.processor.runner.Context;
 import skadistats.clarity.wire.common.proto.Demo;
 
-import javax.enterprise.context.ApplicationScoped;
-import java.util.ArrayList;
+import java.util.concurrent.locks.ReentrantLock;
 
-@ApplicationScoped
-public class ObservableEntityList {
+public class ObservableEntityList extends ObservableListBase<ObservableEntity> {
 
-    private final ObservableList<WrappedEntity> entities = FXCollections.observableList(new ArrayList<>());
+    private ReentrantLock lock = new ReentrantLock();
+    private ObservableEntity[] entities;
+    private boolean changeActive = false;
 
-    public void clear() {
-        entities.clear();
+    public ObservableEntityList(EngineType engineType) {
+        entities = new ObservableEntity[1 << engineType.getIndexBits()];
+    }
+
+    @Override
+    public ObservableEntity get(int index) {
+        return entities[index];
+    }
+
+    @Override
+    public int size() {
+        return entities.length;
+    }
+
+    private void ensureChangeOpen() {
+        if (!changeActive) {
+            changeActive = true;
+            beginChange();
+            Platform.runLater(this::commitChange);
+        }
+    }
+
+    private void commitChange() {
+        lock.lock();
+        try {
+            endChange();
+            changeActive = false;
+            for (int i = 0; i < entities.length; i++) {
+                if (entities[i] != null) {
+                    entities[i].commitChange();
+                }
+            }
+        } finally {
+            lock.unlock();
+        }
     }
 
     @OnReset
-    public void onReset(Context ctx, Demo.CDemoFullPacket packet, ResetPhase phase) {
-        if (phase == ResetPhase.CLEAR) {
-            clear();
+    public void onReset(Context ctx, Demo.CDemoStringTables packet, ResetPhase phase) {
+        lock.lock();
+        try {
+            if (phase == ResetPhase.CLEAR) {
+                ensureChangeOpen();
+                for (int i = 0; i < entities.length; i++) {
+                    if (entities[i] != null) {
+                        nextSet(i, entities[i]);
+                        entities[i] = null;
+                    }
+                }
+            }
+        } finally {
+            lock.unlock();
         }
     }
 
     @OnEntityCreated
     public void onCreate(Context ctx, Entity entity) {
-        entities.add(offsetForIndex(entity.getIndex()), new WrappedEntity(entity));
+        lock.lock();
+        try {
+            ensureChangeOpen();
+            int i = entity.getIndex();
+            nextSet(i, entities[i]);
+            entities[i] = new ObservableEntity(entity);
+        } finally {
+            lock.unlock();
+        }
     }
 
     @OnEntityUpdated
     public void onUpdate(Context ctx, Entity entity, FieldPath[] fieldPaths, int num) {
-        entities.get(offsetForIndex(entity.getIndex())).fireUpdates(fieldPaths, num);
+        lock.lock();
+        try {
+            ensureChangeOpen();
+            int i = entity.getIndex();
+            entities[i].update(fieldPaths, num);
+        } finally {
+            lock.unlock();
+        }
     }
-
 
     @OnEntityDeleted
     public void onDelete(Context ctx, Entity entity) {
-        entities.remove(entity);
-    }
-
-    public ObservableList<WrappedEntity> getEntities() {
-        return entities;
-    }
-
-    public Callback<TableColumn.CellDataFeatures<WrappedEntity, Integer>, ObservableValue<Integer>> getIndexCellFactory() {
-        return param -> new ReadOnlyIntegerWrapper(param.getValue().getEntity().getIndex()).asObject();
-    }
-
-    public Callback<TableColumn.CellDataFeatures<WrappedEntity, String>, ObservableValue<String>> getDtClassCellFactory() {
-        return param -> new ReadOnlyStringWrapper(param.getValue().getEntity().getDtClass().getDtName());
-    }
-
-    private int offsetForIndex(int idx) {
-        int a = -1; // lower bound
-        int b = entities.size(); // upper bound
-        while (a + 1 != b) {
-            int  m = (a + b) >>> 1;
-            if (entities.get(m).getEntity().getIndex() < idx) {
-                a = m;
-            } else {
-                b = m;
-            }
+        lock.lock();
+        try {
+            ensureChangeOpen();
+            int i = entity.getIndex();
+            nextSet(i, entities[i]);
+            entities[i] = null;
+        } finally {
+            lock.unlock();
         }
-        return b;
     }
+
 }

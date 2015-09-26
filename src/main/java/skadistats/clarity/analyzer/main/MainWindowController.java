@@ -2,6 +2,8 @@ package skadistats.clarity.analyzer.main;
 
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
+import javafx.beans.property.ReadOnlyIntegerWrapper;
+import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -10,9 +12,10 @@ import javafx.stage.FileChooser;
 import javafx.util.converter.NumberStringConverter;
 import org.controlsfx.dialog.Dialogs;
 import skadistats.clarity.analyzer.PrimaryStage;
+import skadistats.clarity.analyzer.replay.ObservableEntity;
 import skadistats.clarity.analyzer.replay.ObservableEntityList;
+import skadistats.clarity.analyzer.replay.ObservableEntityProperty;
 import skadistats.clarity.analyzer.replay.ReplayController;
-import skadistats.clarity.analyzer.replay.WrappedEntity;
 
 import javax.inject.Inject;
 import java.io.File;
@@ -37,10 +40,10 @@ public class MainWindowController implements Initializable {
     public Label labelLastTick;
 
     @FXML
-    public TableView<WrappedEntity> entityTable;
+    public TableView<ObservableEntity> entityTable;
 
     @FXML
-    public TableView<WrappedEntity.EntityProperty> detailTable;
+    public TableView<ObservableEntityProperty> detailTable;
 
     @Inject
     private PrimaryStage primaryStage;
@@ -50,9 +53,6 @@ public class MainWindowController implements Initializable {
 
     @Inject
     private ReplayController replayController;
-
-    @Inject
-    private ObservableEntityList entityList;
 
     public void initialize(java.net.URL location, java.util.ResourceBundle resources) {
         BooleanBinding runnerIsNull = Bindings.createBooleanBinding(() -> replayController.getRunner() == null, replayController.runnerProperty());
@@ -72,28 +72,23 @@ public class MainWindowController implements Initializable {
             replayController.getRunner().setDemandedTick(newValue.intValue());
         });
 
+        TableColumn<ObservableEntity, Integer> entityTableIdColumn = (TableColumn<ObservableEntity, Integer>) entityTable.getColumns().get(0);
+        entityTableIdColumn.setCellValueFactory(param -> param.getValue() != null ? param.getValue().indexProperty().asObject() : new ReadOnlyIntegerWrapper(0).asObject());
+        TableColumn<ObservableEntity, String> entityTableNameColumn = (TableColumn<ObservableEntity, String>) entityTable.getColumns().get(1);
+        entityTableNameColumn.setCellValueFactory(param -> param.getValue() != null ? param.getValue().nameProperty() : new ReadOnlyStringWrapper(""));
         entityTable.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-
-            System.out.println(newValue);
-
-            if (newValue == null) {
-                return;
-            }
-
-            TableColumn<WrappedEntity.EntityProperty, String> idColumn =
-                (TableColumn<WrappedEntity.EntityProperty, String>) detailTable.getColumns().get(0);
-            idColumn.setCellValueFactory(newValue.getIndexCellFactory());
-
-            TableColumn<WrappedEntity.EntityProperty, String> nameColumn =
-                (TableColumn<WrappedEntity.EntityProperty, String>) detailTable.getColumns().get(1);
-            nameColumn.setCellValueFactory(newValue.getNameCellFactory());
-
-            TableColumn<WrappedEntity.EntityProperty, String> valueColumn =
-                (TableColumn<WrappedEntity.EntityProperty, String>) detailTable.getColumns().get(2);
-            valueColumn.setCellValueFactory(newValue.getValueCellFactory());
-
-            detailTable.setItems(newValue.getProperties());
+            detailTable.setItems(newValue);
         });
+
+        TableColumn<ObservableEntityProperty, String> idColumn =
+            (TableColumn<ObservableEntityProperty, String>) detailTable.getColumns().get(0);
+        idColumn.setCellValueFactory(param -> param.getValue().indexProperty());
+        TableColumn<ObservableEntityProperty, String> nameColumn =
+            (TableColumn<ObservableEntityProperty, String>) detailTable.getColumns().get(1);
+        nameColumn.setCellValueFactory(param -> param.getValue().nameProperty());
+        TableColumn<ObservableEntityProperty, String> valueColumn =
+            (TableColumn<ObservableEntityProperty, String>) detailTable.getColumns().get(2);
+        valueColumn.setCellValueFactory(param -> param.getValue().valueProperty());
     }
     public void actionQuit(ActionEvent actionEvent) {
         primaryStage.getStage().close();
@@ -117,17 +112,11 @@ public class MainWindowController implements Initializable {
         }
         preferences.put("fileChooserPath", f.getParent());
         try {
-            replayController.load(f);
+            ObservableEntityList entityList = replayController.load(f);
+            entityTable.setItems(entityList);
         } catch (Exception e) {
             Dialogs.create().title("Error loading replay").showException(e);
         }
-        entityTable.setItems(entityList.getEntities());
-
-        TableColumn<WrappedEntity, Integer> idColumn = (TableColumn<WrappedEntity, Integer>) entityTable.getColumns().get(0);
-        idColumn.setCellValueFactory(entityList.getIndexCellFactory());
-
-        TableColumn<WrappedEntity, String> clsColumn = (TableColumn<WrappedEntity, String>) entityTable.getColumns().get(1);
-        clsColumn.setCellValueFactory(entityList.getDtClassCellFactory());
     }
 
     public void clickPlay(ActionEvent actionEvent) {
