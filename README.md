@@ -2,6 +2,8 @@
 
 JavaFX-Application to visulalize the contents of a Dota 2 replay.
 
+![Clarity Analyzer](/screenshot.png?raw=true)
+
 # Building
 
 `mvn package`
