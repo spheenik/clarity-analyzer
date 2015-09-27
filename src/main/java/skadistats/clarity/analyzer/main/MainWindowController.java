@@ -2,7 +2,6 @@ package skadistats.clarity.analyzer.main;
 
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
-import javafx.beans.property.ReadOnlyIntegerWrapper;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -76,8 +75,8 @@ public class MainWindowController implements Initializable {
             replayController.getRunner().setDemandedTick(newValue.intValue());
         });
 
-        TableColumn<ObservableEntity, Integer> entityTableIdColumn = (TableColumn<ObservableEntity, Integer>) entityTable.getColumns().get(0);
-        entityTableIdColumn.setCellValueFactory(param -> param.getValue() != null ? param.getValue().indexProperty().asObject() : new ReadOnlyIntegerWrapper(0).asObject());
+        TableColumn<ObservableEntity, String> entityTableIdColumn = (TableColumn<ObservableEntity, String>) entityTable.getColumns().get(0);
+        entityTableIdColumn.setCellValueFactory(param -> param.getValue() != null ? param.getValue().indexProperty() : new ReadOnlyStringWrapper(""));
         TableColumn<ObservableEntity, String> entityTableNameColumn = (TableColumn<ObservableEntity, String>) entityTable.getColumns().get(1);
         entityTableNameColumn.setCellValueFactory(param -> param.getValue() != null ? param.getValue().nameProperty() : new ReadOnlyStringWrapper(""));
         entityTable.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
@@ -118,7 +117,8 @@ public class MainWindowController implements Initializable {
         preferences.put("fileChooserPath", f.getParent());
         try {
             ObservableEntityList entityList = replayController.load(f);
-            entityTable.setItems(entityList.filtered(e -> e != null));
+            //entityTable.setItems(entityList.filtered(e -> e != null));
+            entityTable.setItems(entityList);
         } catch (Exception e) {
             Dialogs.create().title("Error loading replay").showException(e);
         }

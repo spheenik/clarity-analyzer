@@ -1,7 +1,5 @@
 package skadistats.clarity.analyzer.replay;
 
-import javafx.beans.property.IntegerProperty;
-import javafx.beans.property.ReadOnlyIntegerWrapper;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.beans.property.StringProperty;
 import javafx.collections.ObservableListBase;
@@ -15,7 +13,7 @@ import java.util.List;
 public class ObservableEntity extends ObservableListBase<ObservableEntityProperty> {
 
     private final Entity entity;
-    private final IntegerProperty index;
+    private final StringProperty index;
     private final StringProperty name;
 
     private List<FieldPath> indices = new LinkedList<>();
@@ -24,7 +22,7 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
 
     public ObservableEntity(Entity entity) {
         this.entity = entity;
-        index = new ReadOnlyIntegerWrapper(entity.getIndex());
+        index = new ReadOnlyStringWrapper(String.valueOf(entity.getIndex()));
         name = new ReadOnlyStringWrapper(entity.getDtClass().getDtName());
         List<FieldPath> fieldPaths = entity.getDtClass().collectFieldPaths(entity.getState());
         for (FieldPath fieldPath : fieldPaths) {
@@ -32,6 +30,13 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
             properties.add(new ObservableEntityProperty(entity, fieldPath));
         }
     }
+
+    public ObservableEntity(int index) {
+        this.entity = null;
+        this.index = new ReadOnlyStringWrapper(String.valueOf(index));
+        this.name = new ReadOnlyStringWrapper("");
+    }
+
 
     @Override
     public ObservableEntityProperty get(int index) {
@@ -82,15 +87,15 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
         }
     }
 
-    public int getIndex() {
+    public String getIndex() {
         return index.get();
     }
 
-    public IntegerProperty indexProperty() {
+    public StringProperty indexProperty() {
         return index;
     }
 
-    public void setIndex(int index) {
+    public void setIndex(String index) {
         this.index.set(index);
     }
 

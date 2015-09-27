@@ -8,6 +8,7 @@ import skadistats.clarity.model.FieldPath;
 import skadistats.clarity.processor.entities.OnEntityCreated;
 import skadistats.clarity.processor.entities.OnEntityDeleted;
 import skadistats.clarity.processor.entities.OnEntityUpdated;
+import skadistats.clarity.processor.entities.OnEntityUpdatesCompleted;
 import skadistats.clarity.processor.reader.OnReset;
 import skadistats.clarity.processor.reader.ResetPhase;
 import skadistats.clarity.processor.runner.Context;
@@ -18,20 +19,25 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class ObservableEntityList extends ObservableListBase<ObservableEntity> {
 
-    private static final int ST_REQUEST      = 0x01;
-    private static final int ST_RESET        = 0x02;
-
-    private static final int ST_CHANGE_LIST  = 0x10;
-    private static final int ST_CHANGE_PROP  = 0x20;
+    private static final int CF_LIST = 0x01;
+    private static final int CF_PROP = 0x02;
 
     private final ReentrantLock lock = new ReentrantLock();
     private final Condition platformUpToDate = lock.newCondition();
-    private int status = 0;
+
+    private int changeFlag = 0;
+    private boolean resetInProgress = false;
+    private boolean syncRequested = false;
 
     private ObservableEntity[] entities;
+    private ObservableEntity[] changes;
 
     public ObservableEntityList(EngineType engineType) {
         entities = new ObservableEntity[1 << engineType.getIndexBits()];
+        changes = new ObservableEntity[1 << engineType.getIndexBits()];
+        for (int i = 0; i < entities.length; i++) {
+            entities[i] = new ObservableEntity(i);
+        }
     }
 
     @Override
@@ -47,19 +53,28 @@ public class ObservableEntityList extends ObservableListBase<ObservableEntity> {
     private void commitToPlatform() {
         lock.lock();
         try {
-            if ((status & ST_CHANGE_LIST) != 0) {
+            if ((changeFlag & CF_LIST) != 0) {
+                beginChange();
+                for (int i = 0; i < changes.length; i++) {
+                    if (changes[i] != null) {
+                        ObservableEntity old = entities[i];
+                        entities[i] = changes[i];
+                        changes[i] = null;
+                        nextSet(i, old);
+                    }
+                }
                 endChange();
-                status &= ~ST_CHANGE_LIST;
+                changeFlag &= ~CF_LIST;
             }
-            if ((status & ST_CHANGE_PROP) != 0) {
+            if ((changeFlag & CF_PROP) != 0) {
                 for (int i = 0; i < entities.length; i++) {
                     if (entities[i] != null) {
                         entities[i].commitChange();
                     }
                 }
-                status &= ~ST_CHANGE_PROP;
+                changeFlag &= ~CF_PROP;
             }
-            status &= ~ST_REQUEST;
+            syncRequested = false;
             platformUpToDate.signal();
         } finally {
             lock.unlock();
@@ -67,15 +82,20 @@ public class ObservableEntityList extends ObservableListBase<ObservableEntity> {
     }
 
     private void markChange(int type) {
-        if ((type & ST_CHANGE_LIST) != 0 && (status & ST_CHANGE_LIST) == 0) {
-            status |= ST_CHANGE_LIST;
-            beginChange();
+        if ((type & CF_LIST) != 0 && (changeFlag & CF_LIST) == 0) {
+            changeFlag |= CF_LIST;
         }
-        if ((type & ST_CHANGE_PROP) != 0 && (status & ST_CHANGE_PROP) == 0) {
-            status |= ST_CHANGE_PROP;
+        if ((type & CF_PROP) != 0 && (changeFlag & CF_PROP) == 0) {
+            changeFlag |= CF_PROP;
         }
-        if ((status & (ST_RESET | ST_REQUEST)) == 0 && (status & (ST_CHANGE_LIST | ST_CHANGE_PROP)) != 0) {
-            status |= ST_REQUEST;
+    }
+
+    private void requestSync() {
+        if (resetInProgress) {
+            return;
+        }
+        if (!syncRequested && changeFlag != 0) {
+            syncRequested = true;
             Platform.runLater(this::commitToPlatform);
         }
     }
@@ -85,20 +105,17 @@ public class ObservableEntityList extends ObservableListBase<ObservableEntity> {
         lock.lock();
         try {
             if (phase == ResetPhase.CLEAR) {
-                if ((status & ST_REQUEST) != 0) {
+                if (syncRequested) {
                     platformUpToDate.awaitUninterruptibly();
                 }
-                status |= ST_RESET;
-                markChange(ST_CHANGE_LIST);
-                for (int i = 0; i < entities.length; i++) {
-                    if (entities[i] != null) {
-                        nextSet(i, entities[i]);
-                        entities[i] = null;
-                    }
+                resetInProgress = true;
+                markChange(CF_LIST);
+                for (int i = 0; i < changes.length; i++) {
+                    changes[i] = new ObservableEntity(i);
                 }
             } else if (phase == ResetPhase.COMPLETE) {
-                status &= ~ST_RESET;
-                markChange(0);
+                resetInProgress = false;
+                requestSync();
             }
         } finally {
             lock.unlock();
@@ -109,10 +126,10 @@ public class ObservableEntityList extends ObservableListBase<ObservableEntity> {
     public void onCreate(Context ctx, Entity entity) {
         lock.lock();
         try {
-            markChange(ST_CHANGE_LIST);
+            markChange(CF_LIST);
             int i = entity.getIndex();
-            nextSet(i, entities[i]);
-            entities[i] = new ObservableEntity(entity);
+            System.out.println("create " + i);
+            changes[i] = new ObservableEntity(entity);
         } finally {
             lock.unlock();
         }
@@ -122,9 +139,10 @@ public class ObservableEntityList extends ObservableListBase<ObservableEntity> {
     public void onUpdate(Context ctx, Entity entity, FieldPath[] fieldPaths, int num) {
         lock.lock();
         try {
-            markChange(ST_CHANGE_PROP);
+            markChange(CF_PROP);
             int i = entity.getIndex();
-            entities[i].update(fieldPaths, num);
+            ObservableEntity e = changes[i] == null ? entities[i] : changes[i];
+            e.update(fieldPaths, num);
         } finally {
             lock.unlock();
         }
@@ -134,10 +152,20 @@ public class ObservableEntityList extends ObservableListBase<ObservableEntity> {
     public void onDelete(Context ctx, Entity entity) {
         lock.lock();
         try {
-            markChange(ST_CHANGE_LIST);
+            markChange(CF_LIST);
             int i = entity.getIndex();
-            nextSet(i, entities[i]);
-            entities[i] = null;
+            System.out.println("delete " + i);
+            changes[i] = new ObservableEntity(i);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    @OnEntityUpdatesCompleted
+    public void onUpdatesCompleted(Context ctx) {
+        lock.lock();
+        try {
+            requestSync();
         } finally {
             lock.unlock();
         }
