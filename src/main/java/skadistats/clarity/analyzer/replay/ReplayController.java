@@ -33,7 +33,7 @@ public class ReplayController {
     private class TickingTask extends TimerTask {
         @Override
         public void run() {
-            if (!changing.getValue()) {
+            if (!changing.get()) {
                 if (getTick() >= getLastTick()) {
                     setPlaying(false);
                     return;
