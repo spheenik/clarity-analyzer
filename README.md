@@ -1,6 +1,6 @@
 # Clarity Analyzer
 
-JavaFX-Application to visulalize the contents of a Dota 2 replay.
+JavaFX-Application to interactively visualize the raw data of a Dota 2 replay.
 
 ![Clarity Analyzer](/screenshot.png?raw=true)
 
