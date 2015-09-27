@@ -128,7 +128,7 @@ public class ObservableEntityList extends ObservableListBase<ObservableEntity> {
         try {
             markChange(CF_LIST);
             int i = entity.getIndex();
-            System.out.println("create " + i);
+            //System.out.println("create " + i);
             changes[i] = new ObservableEntity(entity);
         } finally {
             lock.unlock();
@@ -154,7 +154,7 @@ public class ObservableEntityList extends ObservableListBase<ObservableEntity> {
         try {
             markChange(CF_LIST);
             int i = entity.getIndex();
-            System.out.println("delete " + i);
+            //System.out.println("delete " + i);
             changes[i] = new ObservableEntity(i);
         } finally {
             lock.unlock();

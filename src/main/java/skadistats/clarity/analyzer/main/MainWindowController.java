@@ -69,7 +69,9 @@ public class MainWindowController implements Initializable {
 
         slider.maxProperty().bind(replayController.lastTickProperty());
         replayController.tickProperty().addListener((observable, oldValue, newValue) -> {
-            slider.setValue(newValue.intValue());
+            if (!slider.isValueChanging()) {
+                slider.setValue(newValue.intValue());
+            }
         });
         slider.valueProperty().addListener((observable, oldValue, newValue) -> {
             replayController.getRunner().setDemandedTick(newValue.intValue());
