@@ -1,26 +1,30 @@
 package skadistats.clarity.analyzer;
 
+import com.airhacks.afterburner.injection.Injector;
 import javafx.application.Application;
+import javafx.scene.Scene;
+import javafx.scene.image.Image;
 import javafx.stage.Stage;
-import org.jboss.weld.environment.se.Weld;
+import skadistats.clarity.analyzer.main.MainView;
 
 public class Main extends Application {
 
-    private Weld weld;
+    public static Stage primaryStage;
 
     @Override
     public void start(Stage primaryStage) throws Exception{
-        weld.initialize().instance().select(PrimaryStage.class).get().start(primaryStage);
-    }
-
-    @Override
-    public void init() throws Exception {
-        weld = new Weld();
+        this.primaryStage = primaryStage;
+        MainView appView = new MainView();
+        Scene mainScene = new Scene(appView.getView());
+        primaryStage.setTitle("Clarity Analyzer");
+        primaryStage.getIcons().add(new Image(getClass().getResourceAsStream("/images/dota_2_icon.png")));
+        primaryStage.setScene(mainScene);
+        primaryStage.show();
     }
 
     @Override
     public void stop() throws Exception {
-        weld.shutdown();
+        Injector.forgetAll();
     }
 
     public static void main(String[] args) {

@@ -4,19 +4,16 @@ import javafx.beans.property.*;
 import javafx.beans.property.adapter.ReadOnlyJavaBeanIntegerPropertyBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import skadistats.clarity.analyzer.Main;
 import skadistats.clarity.processor.entities.UsesEntities;
 import skadistats.clarity.processor.runner.ControllableRunner;
 import skadistats.clarity.source.MappedFileSource;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import javax.enterprise.context.ApplicationScoped;
 import java.io.File;
 import java.io.IOException;
 import java.util.Timer;
 import java.util.TimerTask;
 
-@ApplicationScoped
 @UsesEntities
 public class ReplayController {
 
@@ -29,6 +26,24 @@ public class ReplayController {
     private BooleanProperty changing = new SimpleBooleanProperty(false);
 
     private Timer timer;
+
+    public ReplayController() {
+        changing.addListener((observable1, oldValue1, newValue1) -> log.info("slider drag {}", newValue1));
+        playing.addListener((observable, oldValue, newValue) -> {
+            if (newValue) {
+                if (timer == null) {
+                    timer = new Timer();
+                    timer.scheduleAtFixedRate(new TickingTask(), 0L, 1000L / 30L);
+                }
+            } else {
+                if (timer != null) {
+                    timer.cancel();
+                    timer = null;
+                }
+            }
+        });
+        Main.primaryStage.setOnCloseRequest(event -> haltIfRunning());
+    }
 
     private class TickingTask extends TimerTask {
         @Override
@@ -45,25 +60,6 @@ public class ReplayController {
         }
     }
 
-    @PostConstruct
-    public void init() {
-        changing.addListener((observable1, oldValue1, newValue1) -> log.info("slider drag {}", newValue1));
-
-        playing.addListener((observable, oldValue, newValue) -> {
-            if (newValue) {
-                if (timer == null) {
-                    timer = new Timer();
-                    timer.scheduleAtFixedRate(new TickingTask(), 0L, 1000L / 30L);
-                }
-            } else {
-                if (timer != null) {
-                    timer.cancel();
-                    timer = null;
-                }
-            }
-        });
-    }
-
     public ObservableEntityList load(File f) throws IOException, NoSuchMethodException {
         haltIfRunning();
         PropertySupportRunner r = new PropertySupportRunner(new MappedFileSource(f.getAbsoluteFile()));
@@ -76,8 +72,10 @@ public class ReplayController {
         return observableEntities;
     }
 
-    @PreDestroy
     public void haltIfRunning() {
+        if (timer != null) {
+            timer.cancel();
+        }
         if (getRunner() != null) {
             getRunner().halt();
         }

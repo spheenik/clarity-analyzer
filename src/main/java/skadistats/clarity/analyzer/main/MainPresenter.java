@@ -13,19 +13,18 @@ import javafx.util.converter.NumberStringConverter;
 import org.controlsfx.dialog.Dialogs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import skadistats.clarity.analyzer.PrimaryStage;
+import skadistats.clarity.analyzer.Main;
 import skadistats.clarity.analyzer.replay.ObservableEntity;
 import skadistats.clarity.analyzer.replay.ObservableEntityList;
 import skadistats.clarity.analyzer.replay.ObservableEntityProperty;
 import skadistats.clarity.analyzer.replay.ReplayController;
 
-import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
 import java.util.function.Predicate;
 import java.util.prefs.Preferences;
 
-public class MainWindowController implements Initializable {
+public class MainPresenter implements Initializable {
 
     protected final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -53,13 +52,7 @@ public class MainWindowController implements Initializable {
     @FXML
     public TextField entityNameFilter;
 
-    @Inject
-    private PrimaryStage primaryStage;
-
-    @Inject
     private Preferences preferences;
-
-    @Inject
     private ReplayController replayController;
 
     private FilteredList<ObservableEntity> filteredEntityList = null;
@@ -74,8 +67,10 @@ public class MainWindowController implements Initializable {
         }
     };
 
-
     public void initialize(java.net.URL location, java.util.ResourceBundle resources) {
+        preferences = Preferences.userNodeForPackage(this.getClass());
+        replayController = new ReplayController();
+
         BooleanBinding runnerIsNull = Bindings.createBooleanBinding(() -> replayController.getRunner() == null, replayController.runnerProperty());
         buttonPlay.disableProperty().bind(runnerIsNull.or(replayController.playingProperty()));
         buttonPause.disableProperty().bind(runnerIsNull.or(replayController.playingProperty().not()));
@@ -120,9 +115,11 @@ public class MainWindowController implements Initializable {
                 filteredEntityList.setPredicate(filterFunc);
             }
         });
+
     }
+
     public void actionQuit(ActionEvent actionEvent) {
-        primaryStage.getStage().close();
+        Main.primaryStage.close();
     }
 
     public void actionOpen(ActionEvent actionEvent) throws IOException {
@@ -137,7 +134,7 @@ public class MainWindowController implements Initializable {
             dir = new File(".");
         }
         fileChooser.setInitialDirectory(dir);
-        File f = fileChooser.showOpenDialog(primaryStage.getStage());
+        File f = fileChooser.showOpenDialog(Main.primaryStage);
         if (f == null) {
             return;
         }
@@ -157,6 +154,6 @@ public class MainWindowController implements Initializable {
 
     public void clickPause(ActionEvent actionEvent) {
         replayController.setPlaying(false);
-
     }
+
 }
