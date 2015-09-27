@@ -27,7 +27,8 @@ public class ObservableEntityProperty {
         value = new StringBinding() {
             @Override
             protected String computeValue() {
-                return entity.getPropertyForFieldPath(fieldPath).toString();
+                Object value = entity.getPropertyForFieldPath(fieldPath);
+                return value != null ? value.toString() : "-";
             }
         };
     }

@@ -29,7 +29,8 @@ public class PropertySupportRunner extends ControllableRunner {
     private final ReentrantLock notificationLock = new ReentrantLock();
     private int notificationOldTick = Integer.MIN_VALUE;
     private int notificationTick = 0;
-    private final Runnable changeNotification = () -> {
+
+    private void commitNotification() {
         notificationLock.lock();
         try {
             changes.firePropertyChange("tick", notificationOldTick, notificationTick);
@@ -37,7 +38,7 @@ public class PropertySupportRunner extends ControllableRunner {
         } finally {
             notificationLock.unlock();
         }
-    };
+    }
 
     @Override
     protected void setTick(int tick) {
@@ -50,7 +51,7 @@ public class PropertySupportRunner extends ControllableRunner {
                 notificationOldTick = getTick();
                 super.setTick(tick);
                 notificationTick = tick;
-                Platform.runLater(changeNotification);
+                Platform.runLater(this::commitNotification);
             }
         } finally {
             notificationLock.unlock();

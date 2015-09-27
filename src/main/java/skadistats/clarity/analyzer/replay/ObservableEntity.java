@@ -106,4 +106,8 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
         this.name.set(name);
     }
 
+    @Override
+    public String toString() {
+        return String.format("%s(%s)", getName(), getIndex());
+    }
 }

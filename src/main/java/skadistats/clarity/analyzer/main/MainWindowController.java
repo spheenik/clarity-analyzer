@@ -11,6 +11,8 @@ import javafx.scene.control.*;
 import javafx.stage.FileChooser;
 import javafx.util.converter.NumberStringConverter;
 import org.controlsfx.dialog.Dialogs;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import skadistats.clarity.analyzer.PrimaryStage;
 import skadistats.clarity.analyzer.replay.ObservableEntity;
 import skadistats.clarity.analyzer.replay.ObservableEntityList;
@@ -23,6 +25,8 @@ import java.io.IOException;
 import java.util.prefs.Preferences;
 
 public class MainWindowController implements Initializable {
+
+    protected final Logger log = LoggerFactory.getLogger(getClass());
 
     @FXML
     public Button buttonPlay;
@@ -77,6 +81,7 @@ public class MainWindowController implements Initializable {
         TableColumn<ObservableEntity, String> entityTableNameColumn = (TableColumn<ObservableEntity, String>) entityTable.getColumns().get(1);
         entityTableNameColumn.setCellValueFactory(param -> param.getValue() != null ? param.getValue().nameProperty() : new ReadOnlyStringWrapper(""));
         entityTable.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            log.info("entity table selection from {} to {}", oldValue, newValue);
             detailTable.setItems(newValue);
         });
 
@@ -113,7 +118,7 @@ public class MainWindowController implements Initializable {
         preferences.put("fileChooserPath", f.getParent());
         try {
             ObservableEntityList entityList = replayController.load(f);
-            entityTable.setItems(entityList);
+            entityTable.setItems(entityList.filtered(e -> e != null));
         } catch (Exception e) {
             Dialogs.create().title("Error loading replay").showException(e);
         }

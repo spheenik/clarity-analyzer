@@ -2,6 +2,8 @@ package skadistats.clarity.analyzer.replay;
 
 import javafx.beans.property.*;
 import javafx.beans.property.adapter.ReadOnlyJavaBeanIntegerPropertyBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import skadistats.clarity.processor.entities.UsesEntities;
 import skadistats.clarity.processor.runner.ControllableRunner;
 import skadistats.clarity.source.MappedFileSource;
@@ -17,6 +19,8 @@ import java.util.TimerTask;
 @ApplicationScoped
 @UsesEntities
 public class ReplayController {
+
+    protected final Logger log = LoggerFactory.getLogger(getClass());
 
     private Property<PropertySupportRunner> runner = new SimpleObjectProperty<>();
     private IntegerProperty tick = new SimpleIntegerProperty(0);
@@ -34,13 +38,17 @@ public class ReplayController {
                     setPlaying(false);
                     return;
                 }
-                getRunner().setDemandedTick(getTick() + 1);
+                if (!getRunner().isResetting()) {
+                    getRunner().setDemandedTick(getTick() + 1);
+                }
             }
         }
     }
 
     @PostConstruct
     public void init() {
+        changing.addListener((observable1, oldValue1, newValue1) -> log.info("slider drag {}", newValue1));
+
         playing.addListener((observable, oldValue, newValue) -> {
             if (newValue) {
                 if (timer == null) {
