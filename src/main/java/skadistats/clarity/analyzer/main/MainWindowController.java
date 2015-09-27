@@ -3,6 +3,7 @@ package skadistats.clarity.analyzer.main;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.ReadOnlyStringWrapper;
+import javafx.collections.transformation.FilteredList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -21,6 +22,7 @@ import skadistats.clarity.analyzer.replay.ReplayController;
 import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
+import java.util.function.Predicate;
 import java.util.prefs.Preferences;
 
 public class MainWindowController implements Initializable {
@@ -48,6 +50,9 @@ public class MainWindowController implements Initializable {
     @FXML
     public TableView<ObservableEntityProperty> detailTable;
 
+    @FXML
+    public TextField entityNameFilter;
+
     @Inject
     private PrimaryStage primaryStage;
 
@@ -56,6 +61,19 @@ public class MainWindowController implements Initializable {
 
     @Inject
     private ReplayController replayController;
+
+    private FilteredList<ObservableEntity> filteredEntityList = null;
+    private Predicate<ObservableEntity> filterFunc = new Predicate<ObservableEntity>() {
+        @Override
+        public boolean test(ObservableEntity e) {
+            String filter = entityNameFilter.getText();
+            if (filter.length() > 0) {
+                return e != null && e.getName().contains(filter);
+            }
+            return true;
+        }
+    };
+
 
     public void initialize(java.net.URL location, java.util.ResourceBundle resources) {
         BooleanBinding runnerIsNull = Bindings.createBooleanBinding(() -> replayController.getRunner() == null, replayController.runnerProperty());
@@ -95,6 +113,13 @@ public class MainWindowController implements Initializable {
         TableColumn<ObservableEntityProperty, String> valueColumn =
             (TableColumn<ObservableEntityProperty, String>) detailTable.getColumns().get(2);
         valueColumn.setCellValueFactory(param -> param.getValue().valueProperty());
+
+        entityNameFilter.textProperty().addListener(observable -> {
+            if (filteredEntityList != null) {
+                filteredEntityList.setPredicate(null);
+                filteredEntityList.setPredicate(filterFunc);
+            }
+        });
     }
     public void actionQuit(ActionEvent actionEvent) {
         primaryStage.getStage().close();
@@ -119,8 +144,8 @@ public class MainWindowController implements Initializable {
         preferences.put("fileChooserPath", f.getParent());
         try {
             ObservableEntityList entityList = replayController.load(f);
-            //entityTable.setItems(entityList.filtered(e -> e != null));
-            entityTable.setItems(entityList);
+            filteredEntityList = entityList.filtered(filterFunc);
+            entityTable.setItems(filteredEntityList);
         } catch (Exception e) {
             Dialogs.create().title("Error loading replay").showException(e);
         }
