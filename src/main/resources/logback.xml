@@ -1,0 +1,17 @@
+<configuration>
+	<appender name="stdout" class="ch.qos.logback.core.ConsoleAppender">
+		<encoder>
+			<pattern>%d{HH:mm:ss.SSS} %-8level %msg%n</pattern>
+		</encoder>
+	</appender>
+
+	<logger name="skadistats.clarity" level="info" />
+
+	<root level="info">
+		<appender-ref ref="stdout" />
+	</root>
+	
+</configuration>
+
+
+
