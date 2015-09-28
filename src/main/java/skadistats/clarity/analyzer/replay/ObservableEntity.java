@@ -77,7 +77,7 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
             int idx = getIndexForFieldPath(fieldPaths[i]);
             if (idx < 0) {
                 ensureChangeOpen();
-                idx = 1 - idx;
+                idx = - idx - 1;
                 indices.add(idx, fieldPaths[i]);
                 properties.add(new ObservableEntityProperty(entity, fieldPaths[i]));
                 nextAdd(idx, idx);
