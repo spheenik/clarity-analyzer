@@ -79,7 +79,7 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
                 ensureChangeOpen();
                 idx = - idx - 1;
                 indices.add(idx, fieldPaths[i]);
-                properties.add(new ObservableEntityProperty(entity, fieldPaths[i]));
+                properties.add(idx, new ObservableEntityProperty(entity, fieldPaths[i]));
                 nextAdd(idx, idx);
             } else {
                 properties.get(idx).setDirty(true);
