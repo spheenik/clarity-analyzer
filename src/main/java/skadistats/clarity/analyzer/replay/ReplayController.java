@@ -73,9 +73,7 @@ public class ReplayController {
     }
 
     public void haltIfRunning() {
-        if (timer != null) {
-            timer.cancel();
-        }
+        setPlaying(false);
         if (getRunner() != null) {
             getRunner().halt();
         }
