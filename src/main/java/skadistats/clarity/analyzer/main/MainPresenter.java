@@ -56,6 +56,14 @@ public class MainPresenter implements Initializable {
     private ReplayController replayController;
 
     private FilteredList<ObservableEntity> filteredEntityList = null;
+
+    private Predicate<ObservableEntity> allFilterFunc = new Predicate<ObservableEntity>() {
+        @Override
+        public boolean test(ObservableEntity e) {
+            return true;
+        }
+    };
+
     private Predicate<ObservableEntity> filterFunc = new Predicate<ObservableEntity>() {
         @Override
         public boolean test(ObservableEntity e) {
@@ -111,7 +119,7 @@ public class MainPresenter implements Initializable {
 
         entityNameFilter.textProperty().addListener(observable -> {
             if (filteredEntityList != null) {
-                filteredEntityList.setPredicate(null);
+                filteredEntityList.setPredicate(allFilterFunc);
                 filteredEntityList.setPredicate(filterFunc);
             }
         });
