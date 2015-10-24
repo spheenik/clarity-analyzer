@@ -76,6 +76,11 @@ public class ReplayController {
         setPlaying(false);
         if (getRunner() != null) {
             getRunner().halt();
+            try {
+                getRunner().getSource().close();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 
