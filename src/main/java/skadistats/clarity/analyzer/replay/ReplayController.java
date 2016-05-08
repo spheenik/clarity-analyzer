@@ -79,7 +79,8 @@ public class ReplayController {
             try {
                 getRunner().getSource().close();
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                Exception et = e;
+                throw (RuntimeException) et;
             }
         }
     }
