@@ -1,10 +1,16 @@
 package skadistats.clarity.analyzer.replay;
 
-import javafx.beans.property.*;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.Property;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.adapter.ReadOnlyJavaBeanIntegerPropertyBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import skadistats.clarity.analyzer.Main;
+import skadistats.clarity.decoder.Util;
 import skadistats.clarity.processor.entities.UsesEntities;
 import skadistats.clarity.processor.runner.ControllableRunner;
 import skadistats.clarity.source.MappedFileSource;
@@ -79,8 +85,7 @@ public class ReplayController {
             try {
                 getRunner().getSource().close();
             } catch (IOException e) {
-                Exception et = e;
-                throw (RuntimeException) et;
+                throw Util.toRuntimeException(e);
             }
         }
     }
