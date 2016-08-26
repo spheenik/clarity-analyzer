@@ -4,6 +4,7 @@ import javafx.application.Platform;
 import skadistats.clarity.processor.runner.ControllableRunner;
 import skadistats.clarity.source.Source;
 
+import javax.annotation.processing.Processor;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.IOException;
@@ -57,5 +58,11 @@ public class PropertySupportRunner extends ControllableRunner {
             notificationLock.unlock();
         }
     }
+
+    public PropertySupportRunner runWith(Processor... processors) {
+        super.runWith((Object[])processors);
+        return this;
+    }
+
 
 }
