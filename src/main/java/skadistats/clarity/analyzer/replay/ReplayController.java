@@ -85,7 +85,7 @@ public class ReplayController {
             try {
                 getRunner().getSource().close();
             } catch (IOException e) {
-                throw Util.toRuntimeException(e);
+                throw Util.toClarityException(e);
             }
         }
     }
