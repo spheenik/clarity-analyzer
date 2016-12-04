@@ -48,8 +48,12 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
         return indices.size();
     }
 
-    private int getIndexForFieldPath(FieldPath fieldPath) {
+    public int getIndexForFieldPath(FieldPath fieldPath) {
         return Collections.binarySearch(indices, fieldPath);
+    }
+
+    public ObservableEntityProperty getPropertyForFieldPath(FieldPath fieldPath) {
+        return properties.get(getIndexForFieldPath(fieldPath));
     }
 
     private void ensureChangeOpen() {
@@ -67,6 +71,7 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
         for (ObservableEntityProperty property : properties) {
             if (property.isDirty()) {
                 property.valueProperty().invalidate();
+                property.rawProperty().invalidate();
                 property.setDirty(false);
             }
         }
@@ -109,6 +114,10 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
 
     public void setName(String name) {
         this.name.set(name);
+    }
+
+    public Entity getEntity() {
+        return entity;
     }
 
     @Override

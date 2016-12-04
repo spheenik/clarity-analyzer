@@ -1,5 +1,6 @@
 package skadistats.clarity.analyzer.replay;
 
+import javafx.beans.binding.ObjectBinding;
 import javafx.beans.binding.StringBinding;
 import skadistats.clarity.model.Entity;
 import skadistats.clarity.model.FieldPath;
@@ -9,6 +10,7 @@ public class ObservableEntityProperty {
     private final StringBinding index;
     private final StringBinding name;
     private final StringBinding value;
+    private final ObjectBinding raw;
     private boolean dirty = false;
 
     public ObservableEntityProperty(Entity entity, FieldPath fieldPath) {
@@ -29,6 +31,12 @@ public class ObservableEntityProperty {
             protected String computeValue() {
                 Object value = entity.getPropertyForFieldPath(fieldPath);
                 return value != null ? value.toString() : "-";
+            }
+        };
+        raw = new ObjectBinding() {
+            @Override
+            protected Object computeValue() {
+                return entity.getPropertyForFieldPath(fieldPath);
             }
         };
     }
@@ -55,6 +63,14 @@ public class ObservableEntityProperty {
 
     public StringBinding valueProperty() {
         return value;
+    }
+
+    public Object getRaw() {
+        return raw.get();
+    }
+
+    public <T> ObjectBinding<T> rawProperty() {
+        return raw;
     }
 
     public boolean isDirty() {

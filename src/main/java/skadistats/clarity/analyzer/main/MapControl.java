@@ -1,0 +1,143 @@
+package skadistats.clarity.analyzer.main;
+
+import javafx.beans.binding.DoubleBinding;
+import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.SimpleIntegerProperty;
+import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
+import javafx.scene.Group;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.Pane;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Ellipse;
+import javafx.scene.transform.Scale;
+import skadistats.clarity.analyzer.replay.ObservableEntity;
+import skadistats.clarity.model.Entity;
+import skadistats.clarity.model.FieldPath;
+
+import java.util.List;
+
+public class MapControl extends Pane implements ListChangeListener<ObservableEntity> {
+
+    private static final double MAP_MAX = 29000.0;
+
+    private final Image mapImage;
+    private final ImageView background;
+    private final Group icons;
+
+    private MapEntity[] mapEntities;
+
+    public MapControl() {
+        mapImage = new Image(getClass().getResourceAsStream("/images/minimap_686.jpg"));
+
+        double scale = MAP_MAX / mapImage.getWidth();
+        background = new ImageView(mapImage);
+        background.getTransforms().add(new Scale(scale, scale));
+        getChildren().add(background);
+
+        icons = new Group();
+        getChildren().add(icons);
+    }
+
+    public double getSize() {
+        return MAP_MAX;
+    }
+
+    public void setEntities(ObservableList<ObservableEntity> entities) {
+        mapEntities = new MapEntity[entities.size()];
+        icons.getChildren().clear();
+        entities.addListener(this);
+        add(0, entities);
+    }
+
+    @Override
+    public void onChanged(Change<? extends ObservableEntity> change) {
+        while(change.next()) {
+            if(change.wasPermutated()) {
+                clear(change.getFrom(), change.getTo());
+                add(change.getFrom(), change.getList().subList(change.getFrom(), change.getTo()));
+            } else {
+                if(change.wasRemoved()) {
+                    clear(change.getFrom(), change.getFrom() + change.getRemovedSize());
+                }
+                if(change.wasAdded()) {
+                    add(change.getFrom(), change.getAddedSubList());
+                }
+            }
+        }
+    }
+
+    private void add(int from, List<? extends ObservableEntity> entities) {
+        for (int i = 0; i < entities.size(); i++) {
+            ObservableEntity oe = entities.get(i);
+            Entity e = oe.getEntity();
+            if (e == null) {
+                continue;
+            }
+            FieldPath fp = e.getDtClass().getFieldPathForName("CBodyComponent.m_cellX");
+            if (fp == null) {
+                continue;
+            }
+            mapEntities[from + i] = new MapEntity(oe, fp);
+        }
+    }
+
+    private void clear(int from, int to) {
+        for (int i = from; i < to; i++) {
+            if (mapEntities[i] != null) {
+                mapEntities[i].clear();
+                mapEntities[i] = null;
+            }
+        }
+    }
+
+    private class MapEntity {
+
+        private final Ellipse shape;
+        private final IntegerProperty cellX = new SimpleIntegerProperty();
+        private final IntegerProperty cellY = new SimpleIntegerProperty();
+        private final DoubleProperty vecX = new SimpleDoubleProperty();
+        private final DoubleProperty vecY = new SimpleDoubleProperty();
+
+        public MapEntity(ObservableEntity oe, FieldPath fp) {
+            cellX.bind(oe.getPropertyForFieldPath(fp).<Integer>rawProperty());
+            fp.path[fp.last]++;
+            cellY.bind(oe.getPropertyForFieldPath(fp).<Integer>rawProperty());
+            fp.path[fp.last]++;
+            fp.path[fp.last]++;
+            vecX.bind(oe.getPropertyForFieldPath(fp).<Double>rawProperty());
+            fp.path[fp.last]++;
+            vecY.bind(oe.getPropertyForFieldPath(fp).<Double>rawProperty());
+
+
+            shape = new Ellipse(200, 200);
+
+
+            fp = oe.getEntity().getDtClass().getFieldPathForName("m_iTeamNum");
+            if (fp != null) {
+                Integer team = oe.getEntity().getPropertyForFieldPath(fp);
+                if (team == 2) {
+                    shape.setFill(Color.GREEN);
+                } else if (team == 3) {
+                    shape.setFill(Color.RED);
+                }
+            }
+            DoubleBinding vx = cellX.multiply(256.0).add(vecX).subtract(32768.0);
+            DoubleBinding vy = cellY.multiply(256.0).add(vecY).multiply(-1.0).add(32768.0);
+
+            shape.centerXProperty().bind(vx.add(MAP_MAX * 0.5));
+            shape.centerYProperty().bind(vy.add(MAP_MAX * 0.5));
+
+            icons.getChildren().add(shape);
+        }
+
+        public void clear() {
+            icons.getChildren().remove(shape);
+        }
+
+    }
+
+}

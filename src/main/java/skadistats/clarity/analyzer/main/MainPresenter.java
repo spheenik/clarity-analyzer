@@ -7,7 +7,15 @@ import javafx.collections.transformation.FilteredList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.Slider;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
+import javafx.scene.layout.AnchorPane;
+import javafx.scene.transform.Scale;
+import javafx.scene.transform.Translate;
 import javafx.stage.FileChooser;
 import javafx.util.converter.NumberStringConverter;
 import org.controlsfx.dialog.Dialogs;
@@ -52,8 +60,14 @@ public class MainPresenter implements Initializable {
     @FXML
     public TextField entityNameFilter;
 
+    @FXML
+    public AnchorPane mapCanvasPane;
+
+    private MapControl mapControl;
+
     private Preferences preferences;
     private ReplayController replayController;
+
 
     private FilteredList<ObservableEntity> filteredEntityList = null;
 
@@ -124,6 +138,28 @@ public class MainPresenter implements Initializable {
             }
         });
 
+        mapControl = new MapControl();
+        mapCanvasPane.getChildren().add(mapControl);
+
+        mapCanvasPane.setTopAnchor(mapControl, 0.0);
+        mapCanvasPane.setBottomAnchor(mapControl, 0.0);
+        mapCanvasPane.setLeftAnchor(mapControl, 0.0);
+        mapCanvasPane.setRightAnchor(mapControl, 0.0);
+        mapCanvasPane.widthProperty().addListener(evt -> resizeMapControl());
+        mapCanvasPane.heightProperty().addListener(evt -> resizeMapControl());
+
+    }
+
+    private void resizeMapControl() {
+        double scale = Math.min(mapCanvasPane.getWidth() / mapControl.getSize(), mapCanvasPane.getHeight() / mapControl.getSize());
+
+        double sw = mapControl.getSize() * scale;
+        double dx = mapCanvasPane.getWidth() - sw;
+        double dy = mapCanvasPane.getHeight() - sw;
+
+        mapCanvasPane.getTransforms().clear();
+        mapCanvasPane.getTransforms().add(new Scale(scale, scale));
+        mapCanvasPane.getTransforms().add(new Translate(0.5 * dx / scale, 0.5 * dy / scale));
     }
 
     public void actionQuit(ActionEvent actionEvent) {
@@ -149,8 +185,10 @@ public class MainPresenter implements Initializable {
         preferences.put("fileChooserPath", f.getParent());
         try {
             ObservableEntityList entityList = replayController.load(f);
+            mapControl.setEntities(entityList);
             filteredEntityList = entityList.filtered(filterFunc);
             entityTable.setItems(filteredEntityList);
+
         } catch (Exception e) {
             Dialogs.create().title("Error loading replay").showException(e);
         }
