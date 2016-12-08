@@ -11,9 +11,12 @@ import javafx.scene.Group;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.Pane;
-import javafx.scene.paint.Color;
-import javafx.scene.shape.Ellipse;
 import javafx.scene.transform.Scale;
+import skadistats.clarity.analyzer.main.icon.BuildingIcon;
+import skadistats.clarity.analyzer.main.icon.CameraIcon;
+import skadistats.clarity.analyzer.main.icon.DefaultIcon;
+import skadistats.clarity.analyzer.main.icon.EntityIcon;
+import skadistats.clarity.analyzer.main.icon.HeroIcon;
 import skadistats.clarity.analyzer.replay.ObservableEntity;
 import skadistats.clarity.model.Entity;
 import skadistats.clarity.model.FieldPath;
@@ -22,7 +25,7 @@ import java.util.List;
 
 public class MapControl extends Pane implements ListChangeListener<ObservableEntity> {
 
-    private static final double MAP_MAX = 29000.0;
+    private static final double MAP_MAX = 29000.0 / 2.0;
 
     private final Image mapImage;
     private final ImageView background;
@@ -96,7 +99,7 @@ public class MapControl extends Pane implements ListChangeListener<ObservableEnt
 
     private class MapEntity {
 
-        private final Ellipse shape;
+        private final EntityIcon<?> icon;
         private final IntegerProperty cellX = new SimpleIntegerProperty();
         private final IntegerProperty cellY = new SimpleIntegerProperty();
         private final DoubleProperty vecX = new SimpleDoubleProperty();
@@ -112,30 +115,30 @@ public class MapControl extends Pane implements ListChangeListener<ObservableEnt
             fp.path[fp.last]++;
             vecY.bind(oe.getPropertyForFieldPath(fp).<Double>rawProperty());
 
+            DoubleBinding vx = cellX.multiply(128.0).add(vecX).multiply(1.0).subtract(16384.0).add(MAP_MAX * 0.5);
+            DoubleBinding vy = cellY.multiply(128.0).add(vecY).multiply(- 1.0).add(16384.0).add(MAP_MAX * 0.5);
 
-            shape = new Ellipse(200, 200);
-
-
-            fp = oe.getEntity().getDtClass().getFieldPathForName("m_iTeamNum");
-            if (fp != null) {
-                Integer team = oe.getEntity().getPropertyForFieldPath(fp);
-                if (team == 2) {
-                    shape.setFill(Color.GREEN);
-                } else if (team == 3) {
-                    shape.setFill(Color.RED);
-                }
+            String name = oe.getEntity().getDtClass().getDtName();
+            if (name.equals("CDOTAPlayer")) {
+                icon = new CameraIcon(oe, vx, vy);
+            } else if (name.equals("CDOTA_BaseNPC_Barracks")) {
+                icon = new BuildingIcon(oe, vx, vy, 250);
+            } else if (name.equals("CDOTA_BaseNPC_Tower")) {
+                icon = new BuildingIcon(oe, vx, vy, 200);
+            } else if (name.equals("CDOTA_BaseNPC_Building")) {
+                icon = new BuildingIcon(oe, vx, vy, 150);
+            } else if (name.equals("CDOTA_BaseNPC_Fort")) {
+                icon = new BuildingIcon(oe, vx, vy, 300);
+            } else if (name.startsWith("CDOTA_Unit_Hero_")) {
+                icon = new HeroIcon(oe, vx, vy);
+            } else {
+                icon = new DefaultIcon(oe, vx, vy);
             }
-            DoubleBinding vx = cellX.multiply(256.0).add(vecX).subtract(32768.0);
-            DoubleBinding vy = cellY.multiply(256.0).add(vecY).multiply(-1.0).add(32768.0);
-
-            shape.centerXProperty().bind(vx.add(MAP_MAX * 0.5));
-            shape.centerYProperty().bind(vy.add(MAP_MAX * 0.5));
-
-            icons.getChildren().add(shape);
+            icons.getChildren().add(icon.getShape());
         }
 
         public void clear() {
-            icons.getChildren().remove(shape);
+            icons.getChildren().remove(icon.getShape());
         }
 
     }
