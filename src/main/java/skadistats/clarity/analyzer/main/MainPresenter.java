@@ -163,6 +163,7 @@ public class MainPresenter implements Initializable {
     }
 
     public void actionQuit(ActionEvent actionEvent) {
+        replayController.haltIfRunning();
         Main.primaryStage.close();
     }
 

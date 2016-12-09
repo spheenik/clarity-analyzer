@@ -1,10 +1,5 @@
 package skadistats.clarity.analyzer.main;
 
-import javafx.beans.binding.DoubleBinding;
-import javafx.beans.property.DoubleProperty;
-import javafx.beans.property.IntegerProperty;
-import javafx.beans.property.SimpleDoubleProperty;
-import javafx.beans.property.SimpleIntegerProperty;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.scene.Group;
@@ -25,18 +20,21 @@ import java.util.List;
 
 public class MapControl extends Pane implements ListChangeListener<ObservableEntity> {
 
-    private static final double MAP_MAX = 29000.0 / 2.0;
+    public static final double MIN_X = -7500;
+    public static final double MAX_X = 7500;
+    public static final double MIN_Y = -7400;
+    public static final double MAX_Y = 7200;
 
     private final Image mapImage;
     private final ImageView background;
     private final Group icons;
 
-    private MapEntity[] mapEntities;
+    private EntityIcon[] mapEntities;
 
     public MapControl() {
         mapImage = new Image(getClass().getResourceAsStream("/images/minimap_686.jpg"));
 
-        double scale = MAP_MAX / mapImage.getWidth();
+        double scale = getSize() / mapImage.getWidth();
         background = new ImageView(mapImage);
         background.getTransforms().add(new Scale(scale, scale));
         getChildren().add(background);
@@ -46,11 +44,11 @@ public class MapControl extends Pane implements ListChangeListener<ObservableEnt
     }
 
     public double getSize() {
-        return MAP_MAX;
+        return MAX_Y - MIN_Y;
     }
 
     public void setEntities(ObservableList<ObservableEntity> entities) {
-        mapEntities = new MapEntity[entities.size()];
+        mapEntities = new EntityIcon[entities.size()];
         icons.getChildren().clear();
         entities.addListener(this);
         add(0, entities);
@@ -84,63 +82,37 @@ public class MapControl extends Pane implements ListChangeListener<ObservableEnt
             if (fp == null) {
                 continue;
             }
-            mapEntities[from + i] = new MapEntity(oe, fp);
+
+            String name = oe.getEntity().getDtClass().getDtName();
+            EntityIcon icon;
+            if (name.equals("CDOTAPlayer")) {
+                icon = new CameraIcon(oe);
+            } else if (name.equals("CDOTA_BaseNPC_Barracks")) {
+                icon = new BuildingIcon(oe, 250);
+            } else if (name.equals("CDOTA_BaseNPC_Tower")) {
+                icon = new BuildingIcon(oe, 200);
+            } else if (name.equals("CDOTA_BaseNPC_Building")) {
+                icon = new BuildingIcon(oe, 150);
+            } else if (name.equals("CDOTA_BaseNPC_Fort")) {
+                icon = new BuildingIcon(oe, 300);
+            } else if (name.startsWith("CDOTA_Unit_Hero_")) {
+                icon = new HeroIcon(oe);
+            } else {
+                icon = new DefaultIcon(oe);
+            }
+
+            mapEntities[from + i] = icon;
+            icons.getChildren().add(icon.getShape());
         }
     }
 
     private void clear(int from, int to) {
         for (int i = from; i < to; i++) {
             if (mapEntities[i] != null) {
-                mapEntities[i].clear();
+                icons.getChildren().remove(mapEntities[i].getShape());
                 mapEntities[i] = null;
             }
         }
-    }
-
-    private class MapEntity {
-
-        private final EntityIcon<?> icon;
-        private final IntegerProperty cellX = new SimpleIntegerProperty();
-        private final IntegerProperty cellY = new SimpleIntegerProperty();
-        private final DoubleProperty vecX = new SimpleDoubleProperty();
-        private final DoubleProperty vecY = new SimpleDoubleProperty();
-
-        public MapEntity(ObservableEntity oe, FieldPath fp) {
-            cellX.bind(oe.getPropertyForFieldPath(fp).<Integer>rawProperty());
-            fp.path[fp.last]++;
-            cellY.bind(oe.getPropertyForFieldPath(fp).<Integer>rawProperty());
-            fp.path[fp.last]++;
-            fp.path[fp.last]++;
-            vecX.bind(oe.getPropertyForFieldPath(fp).<Double>rawProperty());
-            fp.path[fp.last]++;
-            vecY.bind(oe.getPropertyForFieldPath(fp).<Double>rawProperty());
-
-            DoubleBinding vx = cellX.multiply(128.0).add(vecX).multiply(1.0).subtract(16384.0).add(MAP_MAX * 0.5);
-            DoubleBinding vy = cellY.multiply(128.0).add(vecY).multiply(- 1.0).add(16384.0).add(MAP_MAX * 0.5);
-
-            String name = oe.getEntity().getDtClass().getDtName();
-            if (name.equals("CDOTAPlayer")) {
-                icon = new CameraIcon(oe, vx, vy);
-            } else if (name.equals("CDOTA_BaseNPC_Barracks")) {
-                icon = new BuildingIcon(oe, vx, vy, 250);
-            } else if (name.equals("CDOTA_BaseNPC_Tower")) {
-                icon = new BuildingIcon(oe, vx, vy, 200);
-            } else if (name.equals("CDOTA_BaseNPC_Building")) {
-                icon = new BuildingIcon(oe, vx, vy, 150);
-            } else if (name.equals("CDOTA_BaseNPC_Fort")) {
-                icon = new BuildingIcon(oe, vx, vy, 300);
-            } else if (name.startsWith("CDOTA_Unit_Hero_")) {
-                icon = new HeroIcon(oe, vx, vy);
-            } else {
-                icon = new DefaultIcon(oe, vx, vy);
-            }
-            icons.getChildren().add(icon.getShape());
-        }
-
-        public void clear() {
-            icons.getChildren().remove(icon.getShape());
-        }
-
     }
 
 }

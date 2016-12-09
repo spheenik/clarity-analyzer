@@ -1,39 +1,23 @@
 package skadistats.clarity.analyzer.main.icon;
 
-import javafx.beans.binding.DoubleBinding;
-import javafx.scene.shape.Rectangle;
+import javafx.scene.shape.Ellipse;
 import skadistats.clarity.analyzer.replay.ObservableEntity;
-import skadistats.clarity.analyzer.replay.ObservableEntityProperty;
-import skadistats.clarity.model.Vector;
 
-public class HeroIcon extends EntityIcon<Rectangle> {
+public class HeroIcon extends EntityIcon<Ellipse> {
 
-    private final Rectangle shape;
+    private final Ellipse shape;
 
-    public HeroIcon(ObservableEntity oe, DoubleBinding x, DoubleBinding y) {
-        super(oe, x, y);
+    public HeroIcon(ObservableEntity oe) {
+        super(oe);
 
-        shape = new Rectangle(140, 140);
-        shape.xProperty().bind(x.subtract(70));
-        shape.yProperty().bind(y.subtract(70));
+        shape = new Ellipse(140, 140);
         shape.fillProperty().bind(getPlayerColor());
-
-        final ObservableEntityProperty angRot = oe.getPropertyForFieldPath(oe.getEntity().getDtClass().getFieldPathForName("CBodyComponent.m_angRotation"));
-        shape.rotateProperty().bind(new DoubleBinding() {
-            {
-                bind(angRot.rawProperty());
-            }
-
-            @Override
-            protected double computeValue() {
-                Vector v = (Vector) angRot.getRaw();
-                return v.getElement(1);
-            }
-        });
+        shape.translateXProperty().bind(getMapX());
+        shape.translateYProperty().bind(getMapY());
     }
 
     @Override
-    public Rectangle getShape() {
+    public Ellipse getShape() {
         return shape;
     }
 

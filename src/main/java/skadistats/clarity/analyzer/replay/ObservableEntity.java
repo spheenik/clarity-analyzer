@@ -1,5 +1,7 @@
 package skadistats.clarity.analyzer.replay;
 
+import javafx.beans.binding.Bindings;
+import javafx.beans.binding.ObjectBinding;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.beans.property.StringProperty;
 import javafx.collections.ObservableListBase;
@@ -54,6 +56,16 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
 
     public ObservableEntityProperty getPropertyForFieldPath(FieldPath fieldPath) {
         return properties.get(getIndexForFieldPath(fieldPath));
+    }
+
+    public <T> ObjectBinding<T> getPropertyBinding(Class<T> propertyClass, String property, T defaultValue) {
+        FieldPath fp = entity.getDtClass().getFieldPathForName(property);
+        if (fp == null) {
+            return Bindings.createObjectBinding(() -> defaultValue);
+        } else {
+            ObjectBinding<T> ob = getPropertyForFieldPath(fp).rawProperty();
+            return Bindings.createObjectBinding(() -> ob.get(), ob);
+        }
     }
 
     private void ensureChangeOpen() {
