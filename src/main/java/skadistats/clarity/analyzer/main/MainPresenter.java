@@ -83,7 +83,7 @@ public class MainPresenter implements Initializable {
         public boolean test(ObservableEntity e) {
             String filter = entityNameFilter.getText();
             if (filter.length() > 0) {
-                return e != null && e.getName().contains(filter);
+                return e != null && e.getName().toLowerCase().contains(filter.toLowerCase());
             }
             return true;
         }
