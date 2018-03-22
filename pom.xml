@@ -57,6 +57,11 @@
             <version>8.20.8</version>
         </dependency>
         <dependency>
+            <groupId>org.fxmisc.easybind</groupId>
+            <artifactId>easybind</artifactId>
+            <version>1.0.3</version>
+        </dependency>
+        <dependency>
             <groupId>com.skadistats</groupId>
             <artifactId>clarity</artifactId>
             <version>2.3-SNAPSHOT</version>

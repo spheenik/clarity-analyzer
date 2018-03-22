@@ -1,80 +1,110 @@
 package skadistats.clarity.analyzer.replay;
 
+import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
+import javafx.beans.binding.IntegerBinding;
 import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.property.adapter.ReadOnlyJavaBeanIntegerPropertyBuilder;
+import javafx.beans.value.ObservableValue;
+import javafx.scene.control.Slider;
+import org.fxmisc.easybind.EasyBind;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import skadistats.clarity.analyzer.Main;
 import skadistats.clarity.decoder.Util;
 import skadistats.clarity.processor.entities.UsesEntities;
-import skadistats.clarity.processor.runner.ControllableRunner;
-import skadistats.clarity.source.MappedFileSource;
+import skadistats.clarity.source.LiveSource;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.TimeUnit;
 
 @UsesEntities
 public class ReplayController {
 
     protected final Logger log = LoggerFactory.getLogger(getClass());
 
-    private Property<PropertySupportRunner> runner = new SimpleObjectProperty<>();
-    private IntegerProperty tick = new SimpleIntegerProperty(0);
-    private IntegerProperty lastTick = new SimpleIntegerProperty(0);
-    private BooleanProperty playing = new SimpleBooleanProperty(false);
-    private BooleanProperty changing = new SimpleBooleanProperty(false);
-
+    private final Slider slider;
     private Timer timer;
 
-    public ReplayController() {
-        changing.addListener((observable1, oldValue1, newValue1) -> log.info("slider drag {}", newValue1));
-        playing.addListener((observable, oldValue, newValue) -> {
-            if (newValue) {
-                if (timer == null) {
-                    timer = new Timer();
-                    timer.scheduleAtFixedRate(new TickingTask(), 0L, 1000L / 30L);
-                }
-            } else {
-                if (timer != null) {
-                    timer.cancel();
-                    timer = null;
-                }
-            }
-        });
+    private Property<PropertySupportRunner> runner = new SimpleObjectProperty<>();
+
+    private IntegerBinding tick = Bindings.selectInteger(
+            EasyBind.select(runner)
+                    .selectObject(PropertySupportRunner::tickProperty)
+                    .orElse(0)
+    );
+
+    private IntegerBinding lastTick = Bindings.selectInteger(
+            EasyBind.select(runner)
+                    .selectObject(PropertySupportRunner::lastTickProperty)
+                    .orElse(0)
+    );
+
+    private BooleanProperty playing = new SimpleBooleanProperty(false);
+
+    public ReplayController(Slider slider) {
+        this.slider = slider;
+        slider.maxProperty().bind(lastTick);
+        playing.addListener(this::playingStateChanged);
+        slider.valueProperty().addListener(this::sliderValueChanged);
+        tick.addListener(this::tickChanged);
         Main.primaryStage.setOnCloseRequest(event -> haltIfRunning());
+    }
+
+    private void playingStateChanged(ObservableValue<? extends Boolean> v, Boolean o, Boolean n) {
+        if (n) {
+            if (timer == null) {
+                timer = new Timer();
+                timer.scheduleAtFixedRate(new TickingTask(), 0L, 1000L / 30L);
+            }
+        } else {
+            if (timer != null) {
+                timer.cancel();
+                timer = null;
+            }
+        }
+    }
+
+    private void sliderValueChanged(ObservableValue<? extends Number> v, Number o, Number n) {
+        double val = n.doubleValue();
+        // Hack: if the value is not exactly an integer, the slider has been clicked
+        if (val != Math.floor(val)) {
+            getRunner().setDemandedTick(n.intValue());
+        }
+    }
+
+    private void tickChanged(ObservableValue<? extends Number> v, Number o, Number n) {
+        if (!slider.isValueChanging()) {
+            slider.setValue(n.doubleValue());
+        }
     }
 
     private class TickingTask extends TimerTask {
         @Override
         public void run() {
-            if (!changing.get()) {
-                if (getTick() >= getLastTick()) {
-                    setPlaying(false);
+            Platform.runLater(() -> {
+                if (slider.isValueChanging()) {
                     return;
                 }
-                if (!getRunner().isResetting()) {
-                    getRunner().setDemandedTick(getTick() + 1);
+                PropertySupportRunner r = getRunner();
+                if (r.getTick() < r.getLastTick() && !r.isResetting()) {
+                    r.setDemandedTick(r.getTick() + 1);
                 }
-            }
+            });
         }
     }
 
-    public ObservableEntityList load(File f) throws IOException, NoSuchMethodException {
+    public ObservableEntityList load(File f) throws IOException {
         haltIfRunning();
-        PropertySupportRunner r = new PropertySupportRunner(new MappedFileSource(f.getAbsoluteFile()));
+        PropertySupportRunner r = new PropertySupportRunner(new LiveSource(f.getAbsoluteFile().toString(), 10, TimeUnit.SECONDS));
         ObservableEntityList observableEntities = new ObservableEntityList(r.getEngineType());
-        lastTick.bind(new ReadOnlyJavaBeanIntegerPropertyBuilder().bean(r).name("lastTick").build());
-        tick.bind(new ReadOnlyJavaBeanIntegerPropertyBuilder().bean(r).name("tick").build());
         runner.setValue(r);
         r.runWith(this, observableEntities);
-        r.setDemandedTick(0);
         return observableEntities;
     }
 
@@ -90,7 +120,7 @@ public class ReplayController {
         }
     }
 
-    public ControllableRunner getRunner() {
+    public PropertySupportRunner getRunner() {
         return runner.getValue();
     }
 
@@ -102,28 +132,12 @@ public class ReplayController {
         this.runner.setValue(runner);
     }
 
-    public int getTick() {
-        return tick.get();
-    }
-
-    public IntegerProperty tickProperty() {
-        return tick;
-    }
-
-    public void setTick(int tick) {
-        this.tick.set(tick);
-    }
-
-    public int getLastTick() {
-        return lastTick.get();
-    }
-
-    public IntegerProperty lastTickProperty() {
+    public IntegerBinding lastTickProperty() {
         return lastTick;
     }
 
-    public void setLastTick(int lastTick) {
-        this.lastTick.set(lastTick);
+    public IntegerBinding tickProperty() {
+        return tick;
     }
 
     public boolean getPlaying() {
@@ -138,15 +152,4 @@ public class ReplayController {
         this.playing.set(playing);
     }
 
-    public boolean getChanging() {
-        return changing.get();
-    }
-
-    public BooleanProperty changingProperty() {
-        return changing;
-    }
-
-    public void setChanging(boolean changing) {
-        this.changing.set(changing);
-    }
 }

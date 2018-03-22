@@ -17,7 +17,6 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.transform.Scale;
 import javafx.scene.transform.Translate;
 import javafx.stage.FileChooser;
-import javafx.util.converter.NumberStringConverter;
 import org.controlsfx.dialog.Dialogs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -91,26 +90,15 @@ public class MainPresenter implements Initializable {
 
     public void initialize(java.net.URL location, java.util.ResourceBundle resources) {
         preferences = Preferences.userNodeForPackage(this.getClass());
-        replayController = new ReplayController();
+        replayController = new ReplayController(slider);
 
         BooleanBinding runnerIsNull = Bindings.createBooleanBinding(() -> replayController.getRunner() == null, replayController.runnerProperty());
         buttonPlay.disableProperty().bind(runnerIsNull.or(replayController.playingProperty()));
         buttonPause.disableProperty().bind(runnerIsNull.or(replayController.playingProperty().not()));
         slider.disableProperty().bind(runnerIsNull);
-        replayController.changingProperty().bind(slider.valueChangingProperty());
 
-        labelTick.textProperty().bindBidirectional(replayController.tickProperty(), new NumberStringConverter());
-        labelLastTick.textProperty().bindBidirectional(replayController.lastTickProperty(), new NumberStringConverter());
-
-        slider.maxProperty().bind(replayController.lastTickProperty());
-        replayController.tickProperty().addListener((observable, oldValue, newValue) -> {
-            if (!slider.isValueChanging()) {
-                slider.setValue(newValue.intValue());
-            }
-        });
-        slider.valueProperty().addListener((observable, oldValue, newValue) -> {
-            replayController.getRunner().setDemandedTick(newValue.intValue());
-        });
+        labelTick.textProperty().bind(replayController.tickProperty().asString());
+        labelLastTick.textProperty().bind(replayController.lastTickProperty().asString());
 
         TableColumn<ObservableEntity, String> entityTableIdColumn = (TableColumn<ObservableEntity, String>) entityTable.getColumns().get(0);
         entityTableIdColumn.setCellValueFactory(param -> param.getValue() != null ? param.getValue().indexProperty() : new ReadOnlyStringWrapper(""));
