@@ -1,22 +1,42 @@
 package skadistats.clarity.analyzer.main;
 
+import javafx.animation.Animation;
+import javafx.animation.Interpolator;
+import javafx.animation.Transition;
+import javafx.beans.InvalidationListener;
+import javafx.beans.Observable;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
+import javafx.beans.binding.ObjectBinding;
+import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.transformation.FilteredList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.geometry.Insets;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.SelectionMode;
 import javafx.scene.control.Slider;
+import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyCodeCombination;
+import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundFill;
+import javafx.scene.layout.CornerRadii;
+import javafx.scene.paint.Color;
 import javafx.scene.transform.Scale;
 import javafx.scene.transform.Translate;
 import javafx.stage.FileChooser;
+import javafx.util.Duration;
 import org.controlsfx.dialog.Dialogs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +50,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.function.Predicate;
 import java.util.prefs.Preferences;
+import java.util.stream.Collectors;
 
 public class MainPresenter implements Initializable {
 
@@ -118,6 +139,50 @@ public class MainPresenter implements Initializable {
         TableColumn<ObservableEntityProperty, String> valueColumn =
             (TableColumn<ObservableEntityProperty, String>) detailTable.getColumns().get(2);
         valueColumn.setCellValueFactory(param -> param.getValue().valueProperty());
+
+        valueColumn.setCellFactory(v -> new TableCell<ObservableEntityProperty, String>() {
+            final Animation animation = new Transition() {
+                {
+                    setCycleDuration(Duration.millis(500));
+                    setInterpolator(Interpolator.EASE_OUT);
+                }
+                @Override
+                protected void interpolate(double frac) {
+                    Color col = Color.YELLOW.interpolate(Color.WHITE, frac);
+                    getTableRow().setStyle(String.format(
+                            "-fx-control-inner-background: #%02X%02X%02X;",
+                            (int)(col.getRed() * 255),
+                            (int)(col.getGreen() * 255),
+                            (int)(col.getBlue() * 255)
+                    ));
+                }
+            };
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(item);
+                ObservableEntityProperty oep = (ObservableEntityProperty) getTableRow().getItem();
+                if (oep != null) {
+                    animation.stop();
+                    animation.playFrom(Duration.millis(System.currentTimeMillis() - oep.getLastChangedAt()));
+                }
+            }
+        });
+
+        detailTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+        detailTable.setOnKeyPressed(e -> {
+            KeyCombination ctrlC = new KeyCodeCombination(KeyCode.C, KeyCodeCombination.CONTROL_DOWN);
+            if (ctrlC.match(e)) {
+                ClipboardContent cbc = new ClipboardContent();
+                cbc.putString(detailTable.getSelectionModel().getSelectedIndices().stream()
+                        .map(i -> detailTable.getItems().get(i))
+                        .map(p -> String.format("%s %s %s", p.indexProperty().get(), p.nameProperty().get(), p.valueProperty().get()))
+                        .collect(Collectors.joining("\n"))
+                );
+                Clipboard.getSystemClipboard().setContent(cbc);
+            }
+        });
+
 
         entityNameFilter.textProperty().addListener(observable -> {
             if (filteredEntityList != null) {

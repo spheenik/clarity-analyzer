@@ -12,6 +12,7 @@ public class ObservableEntityProperty {
     private final StringBinding value;
     private final ObjectBinding raw;
     private boolean dirty = false;
+    private long lastChangedAt;
 
     public ObservableEntityProperty(Entity entity, FieldPath fieldPath) {
         index = new StringBinding() {
@@ -73,11 +74,18 @@ public class ObservableEntityProperty {
         return raw;
     }
 
+    public long getLastChangedAt() {
+        return lastChangedAt;
+    }
+
     public boolean isDirty() {
         return dirty;
     }
 
     public void setDirty(boolean dirty) {
         this.dirty = dirty;
+        if (dirty) {
+            lastChangedAt = System.currentTimeMillis();
+        }
     }
 }
