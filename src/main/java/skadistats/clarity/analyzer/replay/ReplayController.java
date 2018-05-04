@@ -19,17 +19,24 @@ import skadistats.clarity.source.LiveSource;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 @UsesEntities
 public class ReplayController {
 
+    private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(r -> {
+        Thread t = new Thread(r);
+        t.setDaemon(true);
+        return t;
+    });
+
     protected final Logger log = LoggerFactory.getLogger(getClass());
 
     private final Slider slider;
-    private Timer timer;
+    private ScheduledFuture<?> timer;
 
     private Property<PropertySupportRunner> runner = new SimpleObjectProperty<>();
 
@@ -59,12 +66,16 @@ public class ReplayController {
     private void playingStateChanged(ObservableValue<? extends Boolean> v, Boolean o, Boolean n) {
         if (n) {
             if (timer == null) {
-                timer = new Timer();
-                timer.scheduleAtFixedRate(new TickingTask(), 0L, 1000L / 30L);
+                timer = executor.scheduleAtFixedRate(
+                        this::timerTick,
+                        0L,
+                        (long)(getRunner().getEngineType().getMillisPerTick() * 1000000.0f),
+                        TimeUnit.NANOSECONDS
+                );
             }
         } else {
             if (timer != null) {
-                timer.cancel();
+                timer.cancel(true);
                 timer = null;
             }
         }
@@ -84,19 +95,16 @@ public class ReplayController {
         }
     }
 
-    private class TickingTask extends TimerTask {
-        @Override
-        public void run() {
-            Platform.runLater(() -> {
-                if (slider.isValueChanging()) {
-                    return;
-                }
-                PropertySupportRunner r = getRunner();
-                if (r.getTick() < r.getLastTick() && !r.isResetting()) {
-                    r.setDemandedTick(r.getTick() + 1);
-                }
-            });
-        }
+    private void timerTick() {
+        Platform.runLater(() -> {
+            if (slider.isValueChanging()) {
+                return;
+            }
+            PropertySupportRunner r = getRunner();
+            if (r.getTick() < r.getLastTick() && !r.isResetting()) {
+                r.setDemandedTick(r.getTick() + 1);
+            }
+        });
     }
 
     public ObservableEntityList load(File f) throws IOException {
