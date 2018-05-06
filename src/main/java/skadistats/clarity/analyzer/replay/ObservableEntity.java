@@ -8,8 +8,8 @@ import javafx.collections.ObservableListBase;
 import skadistats.clarity.model.Entity;
 import skadistats.clarity.model.FieldPath;
 
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 
 public class ObservableEntity extends ObservableListBase<ObservableEntityProperty> {
@@ -18,8 +18,8 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
     private final StringProperty index;
     private final StringProperty name;
 
-    private List<FieldPath> indices = new LinkedList<>();
-    private List<ObservableEntityProperty> properties = new LinkedList<>();
+    private List<FieldPath> indices = new ArrayList<>();
+    private List<ObservableEntityProperty> properties = new ArrayList<>();
     private boolean changeActive = false;
 
     public ObservableEntity(Entity entity) {
