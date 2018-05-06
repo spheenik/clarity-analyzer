@@ -104,11 +104,12 @@ public class ObservableEntityList extends ObservableListBase<ObservableEntity> {
     public void onReset(Context ctx, Demo.CDemoStringTables packet, ResetPhase phase) {
         lock.lock();
         try {
-            if (phase == ResetPhase.CLEAR) {
+            if (phase == ResetPhase.START) {
                 if (syncRequested) {
                     platformUpToDate.awaitUninterruptibly();
                 }
                 resetInProgress = true;
+            } else if (phase == ResetPhase.CLEAR) {
                 markChange(CF_LIST);
                 for (int i = 0; i < changes.length; i++) {
                     changes[i] = new ObservableEntity(i);
