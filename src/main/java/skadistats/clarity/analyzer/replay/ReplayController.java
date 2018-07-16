@@ -109,7 +109,7 @@ public class ReplayController {
 
     public ObservableEntityList load(File f) throws IOException {
         haltIfRunning();
-        PropertySupportRunner r = new PropertySupportRunner(new LiveSource(f.getAbsoluteFile().toString(), 10, TimeUnit.SECONDS));
+        PropertySupportRunner r = new PropertySupportRunner(new LiveSource(f.getAbsoluteFile().toString(), 30, TimeUnit.SECONDS));
         ObservableEntityList observableEntities = new ObservableEntityList(r.getEngineType());
         runner.setValue(r);
         r.runWith(this, observableEntities);
