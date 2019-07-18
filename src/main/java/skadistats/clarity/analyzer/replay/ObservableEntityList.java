@@ -100,29 +100,6 @@ public class ObservableEntityList extends ObservableListBase<ObservableEntity> {
         }
     }
 
-    @OnReset
-    public void onReset(Context ctx, Demo.CDemoStringTables packet, ResetPhase phase) {
-        lock.lock();
-        try {
-            if (phase == ResetPhase.START) {
-                if (syncRequested) {
-                    platformUpToDate.awaitUninterruptibly();
-                }
-                resetInProgress = true;
-            } else if (phase == ResetPhase.CLEAR) {
-                markChange(CF_LIST);
-                for (int i = 0; i < changes.length; i++) {
-                    changes[i] = new ObservableEntity(i);
-                }
-            } else if (phase == ResetPhase.COMPLETE) {
-                resetInProgress = false;
-                requestSync();
-            }
-        } finally {
-            lock.unlock();
-        }
-    }
-
     @OnEntityCreated
     public void onCreate(Context ctx, Entity entity) {
         lock.lock();
