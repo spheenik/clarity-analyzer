@@ -9,10 +9,6 @@ import skadistats.clarity.processor.entities.OnEntityCreated;
 import skadistats.clarity.processor.entities.OnEntityDeleted;
 import skadistats.clarity.processor.entities.OnEntityUpdated;
 import skadistats.clarity.processor.entities.OnEntityUpdatesCompleted;
-import skadistats.clarity.processor.reader.OnReset;
-import skadistats.clarity.processor.reader.ResetPhase;
-import skadistats.clarity.processor.runner.Context;
-import skadistats.clarity.wire.common.proto.Demo;
 
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
@@ -101,7 +97,7 @@ public class ObservableEntityList extends ObservableListBase<ObservableEntity> {
     }
 
     @OnEntityCreated
-    public void onCreate(Context ctx, Entity entity) {
+    public void onCreate(Entity entity) {
         lock.lock();
         try {
             markChange(CF_LIST);
@@ -114,7 +110,7 @@ public class ObservableEntityList extends ObservableListBase<ObservableEntity> {
     }
 
     @OnEntityUpdated
-    public void onUpdate(Context ctx, Entity entity, FieldPath[] fieldPaths, int num) {
+    public void onUpdate(Entity entity, FieldPath[] fieldPaths, int num) {
         lock.lock();
         try {
             markChange(CF_PROP);
@@ -127,7 +123,7 @@ public class ObservableEntityList extends ObservableListBase<ObservableEntity> {
     }
 
     @OnEntityDeleted
-    public void onDelete(Context ctx, Entity entity) {
+    public void onDelete(Entity entity) {
         lock.lock();
         try {
             markChange(CF_LIST);
@@ -140,7 +136,7 @@ public class ObservableEntityList extends ObservableListBase<ObservableEntity> {
     }
 
     @OnEntityUpdatesCompleted
-    public void onUpdatesCompleted(Context ctx) {
+    public void onUpdatesCompleted() {
         lock.lock();
         try {
             requestSync();
