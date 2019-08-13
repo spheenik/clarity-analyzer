@@ -9,6 +9,7 @@ import skadistats.clarity.model.Entity;
 import skadistats.clarity.model.FieldPath;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -18,7 +19,7 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
     private final StringProperty index;
     private final StringProperty name;
 
-    private List<FieldPath> indices = new ArrayList<>();
+    private List<FieldPath<? super FieldPath>> indices = new ArrayList<>();
     private List<ObservableEntityProperty> properties = new ArrayList<>();
     private boolean changeActive = false;
 
@@ -26,7 +27,7 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
         this.entity = entity;
         index = new ReadOnlyStringWrapper(String.valueOf(entity.getIndex()));
         name = new ReadOnlyStringWrapper(entity.getDtClass().getDtName());
-        List<FieldPath> fieldPaths = entity.getDtClass().collectFieldPaths(entity.getState());
+        Collection<FieldPath> fieldPaths = entity.getState().collectFieldPaths();
         for (FieldPath fieldPath : fieldPaths) {
             indices.add(fieldPath);
             properties.add(new ObservableEntityProperty(entity, fieldPath));
@@ -50,7 +51,7 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
         return indices.size();
     }
 
-    public int getIndexForFieldPath(FieldPath fieldPath) {
+    public <F extends FieldPath<F>> int getIndexForFieldPath(F fieldPath) {
         return Collections.binarySearch(indices, fieldPath);
     }
 
