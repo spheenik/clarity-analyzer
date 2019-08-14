@@ -51,7 +51,7 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
         return indices.size();
     }
 
-    public <F extends FieldPath<F>> int getIndexForFieldPath(F fieldPath) {
+    public <F extends FieldPath> int getIndexForFieldPath(F fieldPath) {
         return Collections.binarySearch(indices, fieldPath);
     }
 
