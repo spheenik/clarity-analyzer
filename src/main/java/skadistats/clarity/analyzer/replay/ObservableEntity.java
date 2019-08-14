@@ -9,8 +9,8 @@ import skadistats.clarity.model.Entity;
 import skadistats.clarity.model.FieldPath;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
 public class ObservableEntity extends ObservableListBase<ObservableEntityProperty> {
@@ -27,10 +27,11 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
         this.entity = entity;
         index = new ReadOnlyStringWrapper(String.valueOf(entity.getIndex()));
         name = new ReadOnlyStringWrapper(entity.getDtClass().getDtName());
-        Collection<FieldPath> fieldPaths = entity.getState().collectFieldPaths();
-        for (FieldPath fieldPath : fieldPaths) {
-            indices.add(fieldPath);
-            properties.add(new ObservableEntityProperty(entity, fieldPath));
+        Iterator<FieldPath> iter = entity.getState().fieldPathIterator();
+        while (iter.hasNext()) {
+            FieldPath fp = iter.next();
+            indices.add(fp);
+            properties.add(new ObservableEntityProperty(entity, fp));
         }
     }
 
