@@ -13,7 +13,7 @@ import org.fxmisc.easybind.EasyBind;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import skadistats.clarity.analyzer.Main;
-import skadistats.clarity.decoder.Util;
+import skadistats.clarity.io.Util;
 import skadistats.clarity.processor.entities.UsesEntities;
 import skadistats.clarity.source.LiveSource;
 
