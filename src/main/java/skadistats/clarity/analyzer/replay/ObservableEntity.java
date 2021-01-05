@@ -60,8 +60,13 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
     }
 
     private ObservableEntityProperty createProperty(FieldPath fp) {
+        String type = dtClass.evaluate(
+                s1 -> s1.getReceiveProps()[fp.s1().idx()].getSendProp().getType().toString(),
+                s2 -> s2.getTypeForFieldPath(fp.s2()).toString()
+        );
         ObservableEntityProperty property = new ObservableEntityProperty(
                 fp,
+                type,
                 dtClass.getNameForFieldPath(fp),
                 () -> ObservableEntity.this.state.getValueForFieldPath(fp)
         );
@@ -116,7 +121,7 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
             if (rightIdx <= properties.size()) {
                 rightIdx++;
                 if (rightIdx < properties.size()) {
-                    right = properties.get(rightIdx).fp;
+                    right = properties.get(rightIdx).getFieldPath();
                 } else {
                     right = null;
                 }

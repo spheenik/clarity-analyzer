@@ -1,8 +1,5 @@
 package skadistats.clarity.analyzer.main;
 
-import javafx.animation.Animation;
-import javafx.animation.Interpolator;
-import javafx.animation.Transition;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.binding.ObjectBinding;
@@ -14,7 +11,6 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.Slider;
-import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
@@ -23,12 +19,11 @@ import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.AnchorPane;
-import javafx.scene.paint.Color;
 import javafx.scene.transform.Scale;
 import javafx.scene.transform.Translate;
 import javafx.stage.FileChooser;
-import javafx.util.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import skadistats.clarity.analyzer.Main;
@@ -38,9 +33,13 @@ import skadistats.clarity.analyzer.replay.ReplayController;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.prefs.Preferences;
 import java.util.stream.Collectors;
+
+import static javafx.beans.binding.Bindings.createStringBinding;
+import static javafx.beans.binding.Bindings.valueAt;
 
 public class MainPresenter implements Initializable {
 
@@ -73,13 +72,10 @@ public class MainPresenter implements Initializable {
     @FXML
     public AnchorPane mapCanvasPane;
 
-    private MapControl mapControl;
-
     private Preferences preferences;
     private ReplayController replayController;
-
-
-    private FilteredList<ObservableEntity> filteredEntityList = null;
+    private MapControl mapControl;
+    private FilteredList<ObservableEntity> filteredEntityList;
 
     private Predicate<ObservableEntity> allFilterFunc = new Predicate<ObservableEntity>() {
         @Override
@@ -111,73 +107,38 @@ public class MainPresenter implements Initializable {
         labelTick.textProperty().bind(replayController.tickProperty().asString());
         labelLastTick.textProperty().bind(replayController.lastTickProperty().asString());
 
-        TableColumn<ObservableEntity, String> entityTableIdColumn = (TableColumn<ObservableEntity, String>) entityTable.getColumns().get(0);
-        entityTableIdColumn.setCellValueFactory(e -> e.getValue().indexProperty().asString());
-        TableColumn<ObservableEntity, String> entityTableNameColumn = (TableColumn<ObservableEntity, String>) entityTable.getColumns().get(1);
-        entityTableNameColumn.setCellValueFactory(
-                e -> {
-                    ObjectBinding<? extends ObservableEntity> src = Bindings.valueAt(replayController.getEntityList(), e.getValue().getIndex());
-                    return Bindings.createStringBinding(() -> src.get().getName(), src);
-                }
+        // entity table
+        createTableCell(entityTable, "#", String.class, col ->
+                col.setCellValueFactory(f -> f.getValue().indexProperty().asString())
         );
-
+        createTableCell(entityTable, "class", String.class, col ->
+                col.setCellValueFactory(f -> {
+                    ObjectBinding<? extends ObservableEntity> src = valueAt(replayController.getEntityList(), f.getValue().getIndex());
+                    return createStringBinding(() -> src.get().getName(), src);
+                })
+        );
         entityTable.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             log.info("entity table selection from {} to {}", oldValue, newValue);
             detailTable.setItems(newValue);
         });
 
-        TableColumn<ObservableEntityProperty, String> idColumn =
-            (TableColumn<ObservableEntityProperty, String>) detailTable.getColumns().get(0);
-        idColumn.setCellValueFactory(param -> param.getValue().indexProperty());
-        TableColumn<ObservableEntityProperty, String> nameColumn =
-            (TableColumn<ObservableEntityProperty, String>) detailTable.getColumns().get(1);
-        nameColumn.setCellValueFactory(param -> param.getValue().nameProperty());
-        TableColumn<ObservableEntityProperty, String> valueColumn =
-            (TableColumn<ObservableEntityProperty, String>) detailTable.getColumns().get(2);
-        valueColumn.setCellValueFactory(param -> param.getValue().valueProperty().asString());
-
-        valueColumn.setCellFactory(v -> new TableCell<ObservableEntityProperty, String>() {
-            final Animation animation = new Transition() {
-                {
-                    setCycleDuration(Duration.millis(500));
-                    setInterpolator(Interpolator.EASE_OUT);
+        // detail table
+        createTableCell(detailTable, "#", String.class, col ->
+                col.setCellValueFactory(f -> f.getValue().fieldPathProperty().asString())
+        );
+        createTableCell(detailTable, "type", String.class, col ->
+                col.setCellValueFactory(f -> f.getValue().typeProperty())
+        );
+        createTableCell(detailTable, "name", String.class, col ->
+                col.setCellValueFactory(f -> f.getValue().nameProperty())
+        );
+        createTableCell(detailTable, "value", String.class, col -> {
+                    col.setCellValueFactory(f -> f.getValue().valueProperty().asString());
+                    col.setCellFactory(v -> new EntityValueTableCell());
                 }
-                @Override
-                protected void interpolate(double frac) {
-                    Color col = Color.YELLOW.interpolate(Color.WHITE, frac);
-                    getTableRow().setStyle(String.format(
-                            "-fx-control-inner-background: #%02X%02X%02X;",
-                            (int)(col.getRed() * 255),
-                            (int)(col.getGreen() * 255),
-                            (int)(col.getBlue() * 255)
-                    ));
-                }
-            };
-            @Override
-            protected void updateItem(String item, boolean empty) {
-                super.updateItem(item, empty);
-                setText(item);
-                ObservableEntityProperty oep = (ObservableEntityProperty) getTableRow().getItem();
-                if (oep != null) {
-                    animation.stop();
-                    animation.playFrom(Duration.millis(System.currentTimeMillis() - oep.getLastChangedAt()));
-                }
-            }
-        });
-
+        );
         detailTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-        detailTable.setOnKeyPressed(e -> {
-            KeyCombination ctrlC = new KeyCodeCombination(KeyCode.C, KeyCodeCombination.CONTROL_DOWN);
-            if (ctrlC.match(e)) {
-                ClipboardContent cbc = new ClipboardContent();
-                cbc.putString(detailTable.getSelectionModel().getSelectedIndices().stream()
-                        .map(i -> detailTable.getItems().get(i))
-                        .map(p -> String.format("%s %s %s", p.indexProperty().get(), p.nameProperty().get(), p.valueProperty().get()))
-                        .collect(Collectors.joining("\n"))
-                );
-                Clipboard.getSystemClipboard().setContent(cbc);
-            }
-        });
+        detailTable.setOnKeyPressed(this::handleDetailTableKeyPressed);
 
 
         entityNameFilter.textProperty().addListener(observable -> {
@@ -197,6 +158,12 @@ public class MainPresenter implements Initializable {
         mapCanvasPane.widthProperty().addListener(evt -> resizeMapControl());
         mapCanvasPane.heightProperty().addListener(evt -> resizeMapControl());
 
+    }
+
+    private <S, V> void createTableCell(TableView<S> tableView, String header, Class<V> valueClass, Consumer<TableColumn<S, V>> columnInitializer) {
+        TableColumn<S, V> column = new TableColumn<>(header);
+        tableView.getColumns().add(column);
+        columnInitializer.accept(column);
     }
 
     private void resizeMapControl() {
@@ -250,6 +217,19 @@ public class MainPresenter implements Initializable {
 
     public void clickPause(ActionEvent actionEvent) {
         replayController.setPlaying(false);
+    }
+
+    private void handleDetailTableKeyPressed(KeyEvent e) {
+        KeyCombination ctrlC = new KeyCodeCombination(KeyCode.C, KeyCodeCombination.CONTROL_DOWN);
+        if (ctrlC.match(e)) {
+            ClipboardContent cbc = new ClipboardContent();
+            cbc.putString(detailTable.getSelectionModel().getSelectedIndices().stream()
+                    .map(i -> detailTable.getItems().get(i))
+                    .map(p -> String.format("%s %s %s", p.getFieldPath(), p.getName(), p.getValue()))
+                    .collect(Collectors.joining("\n"))
+            );
+            Clipboard.getSystemClipboard().setContent(cbc);
+        }
     }
 
 }
