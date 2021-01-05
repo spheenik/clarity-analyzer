@@ -3,18 +3,13 @@ package skadistats.clarity.analyzer.main;
 import javafx.animation.Animation;
 import javafx.animation.Interpolator;
 import javafx.animation.Transition;
-import javafx.beans.InvalidationListener;
-import javafx.beans.Observable;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
-import javafx.beans.binding.ObjectBinding;
-import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.transformation.FilteredList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.geometry.Insets;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.SelectionMode;
@@ -29,15 +24,11 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.Background;
-import javafx.scene.layout.BackgroundFill;
-import javafx.scene.layout.CornerRadii;
 import javafx.scene.paint.Color;
 import javafx.scene.transform.Scale;
 import javafx.scene.transform.Translate;
 import javafx.stage.FileChooser;
 import javafx.util.Duration;
-import org.controlsfx.dialog.Dialogs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import skadistats.clarity.analyzer.Main;
@@ -242,9 +233,9 @@ public class MainPresenter implements Initializable {
             mapControl.setEntities(entityList);
             filteredEntityList = entityList.filtered(filterFunc);
             entityTable.setItems(filteredEntityList);
-
         } catch (Exception e) {
-            Dialogs.create().title("Error loading replay").showException(e);
+            e.printStackTrace();
+            new ExceptionDialog(e).show();
         }
     }
 
