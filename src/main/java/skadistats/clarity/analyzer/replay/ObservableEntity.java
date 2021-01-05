@@ -8,6 +8,8 @@ import javafx.beans.property.ReadOnlyStringProperty;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.ObservableListBase;
 import lombok.extern.slf4j.Slf4j;
+import skadistats.clarity.io.s2.Field;
+import skadistats.clarity.io.s2.S2DTClass;
 import skadistats.clarity.model.DTClass;
 import skadistats.clarity.model.FieldPath;
 import skadistats.clarity.model.state.EntityState;
@@ -71,7 +73,11 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
         for (FieldPath fp : fieldPaths) {
             int idx = getIndexForFieldPath(fp);
             if (idx < 0) {
-                log.warn("property at fieldpath {} for entity {} not found for update", fp, getName());
+                // we can assume the field path to not be found only for Source 2
+                Field field = ((S2DTClass) dtClass).getFieldForFieldPath(fp.s2());
+                if (!field.isHiddenFieldPath()) {
+                    log.warn("property at fieldpath {} for entity {} not found for update", fp, getName());
+                }
                 continue;
             }
             ObservableEntityProperty property = properties.get(idx);
@@ -93,7 +99,7 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
     private class CountUpdater {
 
         private Iterator<FieldPath> leftIter;
-        private int nextRightIdx = 0;
+        private int rightIdx = -1;
         private FieldPath left = null;
         private FieldPath right = null;
         private List<ObservableEntityProperty> akku = new ArrayList<>();
@@ -107,11 +113,15 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
         }
 
         private void advanceRight() {
-            if (nextRightIdx < properties.size()) {
-                right = properties.get(nextRightIdx).fp;
-                nextRightIdx++;
+            if (rightIdx <= properties.size()) {
+                rightIdx++;
+                if (rightIdx < properties.size()) {
+                    right = properties.get(rightIdx).fp;
+                } else {
+                    right = null;
+                }
             } else {
-                right = null;
+                throw new UnsupportedOperationException("should never happen");
             }
         }
 
@@ -132,26 +142,25 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
                     advanceLeft();
                     advanceRight();
                 } else if (rightHigher()) {
-                    int baseIdx = nextRightIdx - (right == null ? 0 : 1);
                     do {
                         akku.add(createProperty(left));
                         advanceLeft();
                     } while (rightHigher());
                     int n = akku.size();
-                    properties.addAll(baseIdx, akku);
-                    nextAdd(baseIdx, baseIdx + n);
-                    nextRightIdx += n;
+                    properties.addAll(rightIdx, akku);
+                    nextAdd(rightIdx, rightIdx + n);
+                    rightIdx += n;
                     akku.clear();
                 } else if (leftHigher()) {
-                    int baseIdx = nextRightIdx - 1;
+                    int baseIdx = rightIdx;
                     do {
-                        akku.add(properties.get(nextRightIdx - 1));
+                        akku.add(properties.get(rightIdx));
                         advanceRight();
                     } while (leftHigher());
                     int n = akku.size();
                     properties.removeAll(akku);
                     nextRemove(baseIdx, akku);
-                    nextRightIdx -= n;
+                    rightIdx -= n;
                     akku.clear();
                 } else {
                     throw new UnsupportedOperationException("should never happen");
