@@ -2,45 +2,167 @@ package skadistats.clarity.analyzer.replay;
 
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.ObjectBinding;
+import javafx.beans.property.ReadOnlyIntegerProperty;
+import javafx.beans.property.ReadOnlyIntegerWrapper;
+import javafx.beans.property.ReadOnlyStringProperty;
 import javafx.beans.property.ReadOnlyStringWrapper;
-import javafx.beans.property.StringProperty;
 import javafx.collections.ObservableListBase;
-import skadistats.clarity.model.Entity;
+import lombok.extern.slf4j.Slf4j;
+import skadistats.clarity.model.DTClass;
 import skadistats.clarity.model.FieldPath;
+import skadistats.clarity.model.state.EntityState;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 
+@Slf4j
 public class ObservableEntity extends ObservableListBase<ObservableEntityProperty> {
 
-    private final Entity entity;
-    private final StringProperty index;
-    private final StringProperty name;
+    private final DTClass dtClass;
+    private final ReadOnlyIntegerProperty index;
+    private final ReadOnlyStringProperty name;
 
-    private List<FieldPath<? super FieldPath>> indices = new ArrayList<>();
-    private List<ObservableEntityProperty> properties = new ArrayList<>();
-    private boolean changeActive = false;
+    private final List<ObservableEntityProperty> properties;
 
-    public ObservableEntity(Entity entity) {
-        this.entity = entity;
-        index = new ReadOnlyStringWrapper(String.valueOf(entity.getIndex()));
-        name = new ReadOnlyStringWrapper(entity.getDtClass().getDtName());
-        Iterator<FieldPath> iter = entity.getState().fieldPathIterator();
+    private EntityState state;
+
+    public ObservableEntity(int index) {
+        this(index, null, null);
+    }
+
+    public ObservableEntity(int index, DTClass dtClass, EntityState state) {
+        this.dtClass = dtClass;
+        this.index = new ReadOnlyIntegerWrapper(index);
+        if (dtClass != null) {
+            this.name = new ReadOnlyStringWrapper(dtClass.getDtName());
+            this.properties = createProperties(state);
+        } else {
+            this.name = new ReadOnlyStringWrapper("");
+            this.properties = null;
+        }
+        this.state = state;
+    }
+
+    private List<ObservableEntityProperty> createProperties(EntityState state) {
+        List<ObservableEntityProperty> properties = new ArrayList<>();
+        Iterator<FieldPath> iter = state.fieldPathIterator();
         while (iter.hasNext()) {
             FieldPath fp = iter.next();
-            indices.add(fp);
-            properties.add(new ObservableEntityProperty(entity, fp));
+            ObservableEntityProperty property = createProperty(fp);
+            properties.add(property);
+        }
+        return properties;
+    }
+
+    private ObservableEntityProperty createProperty(FieldPath fp) {
+        ObservableEntityProperty property = new ObservableEntityProperty(
+                fp,
+                dtClass.getNameForFieldPath(fp),
+                () -> ObservableEntity.this.state.getValueForFieldPath(fp)
+        );
+        return property;
+    }
+
+    void performUpdate(FieldPath[] fieldPaths, EntityState state) {
+        this.state = state;
+        for (FieldPath fp : fieldPaths) {
+            int idx = getIndexForFieldPath(fp);
+            if (idx < 0) {
+                log.warn("property at fieldpath {} for entity {} not found for update", fp, getName());
+                continue;
+            }
+            ObservableEntityProperty property = properties.get(idx);
+            property.valueProperty().invalidate();
         }
     }
 
-    public ObservableEntity(int index) {
-        this.entity = null;
-        this.index = new ReadOnlyStringWrapper(String.valueOf(index));
-        this.name = new ReadOnlyStringWrapper("");
+    public int getIndexForFieldPath(FieldPath fp) {
+        return Collections.binarySearch(properties, fp);
     }
 
+    public void performCountChanged(EntityState state) {
+        this.state = state;
+        beginChange();
+        new CountUpdater(state.fieldPathIterator()).updateCount();
+        endChange();
+    }
+
+    private class CountUpdater {
+
+        private Iterator<FieldPath> leftIter;
+        private int nextRightIdx = 0;
+        private FieldPath left = null;
+        private FieldPath right = null;
+        private List<ObservableEntityProperty> akku = new ArrayList<>();
+
+        public CountUpdater(Iterator<FieldPath> leftIter) {
+            this.leftIter = leftIter;
+        }
+
+        private void advanceLeft() {
+            left = leftIter.hasNext() ? leftIter.next() : null;
+        }
+
+        private void advanceRight() {
+            if (nextRightIdx < properties.size()) {
+                right = properties.get(nextRightIdx).fp;
+                nextRightIdx++;
+            } else {
+                right = null;
+            }
+        }
+
+        private boolean rightHigher() {
+            return left != null && (right == null || right.compareTo(left) > 0);
+        }
+
+        private boolean leftHigher() {
+            return right != null && (left == null || left.compareTo(right) > 0);
+        }
+
+        private void updateCount() {
+            advanceLeft();
+            advanceRight();
+            while (true) {
+                if (Objects.equals(left, right)) {
+                    if (left == null) break;
+                    advanceLeft();
+                    advanceRight();
+                } else if (rightHigher()) {
+                    int baseIdx = nextRightIdx - (right == null ? 0 : 1);
+                    do {
+                        akku.add(createProperty(left));
+                        advanceLeft();
+                    } while (rightHigher());
+                    int n = akku.size();
+                    properties.addAll(baseIdx, akku);
+                    nextAdd(baseIdx, baseIdx + n);
+                    nextRightIdx += n;
+                    akku.clear();
+                } else if (leftHigher()) {
+                    int baseIdx = nextRightIdx - 1;
+                    do {
+                        akku.add(properties.get(nextRightIdx - 1));
+                        advanceRight();
+                    } while (leftHigher());
+                    int n = akku.size();
+                    properties.removeAll(akku);
+                    nextRemove(baseIdx, akku);
+                    nextRightIdx -= n;
+                    akku.clear();
+                } else {
+                    throw new UnsupportedOperationException("should never happen");
+                }
+            }
+        }
+    }
+
+    public DTClass getDtClass() {
+        return dtClass;
+    }
 
     @Override
     public ObservableEntityProperty get(int index) {
@@ -49,93 +171,45 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
 
     @Override
     public int size() {
-        return indices.size();
+        return properties != null ? properties.size() : 0;
     }
 
-    public <F extends FieldPath> int getIndexForFieldPath(F fieldPath) {
-        return Collections.binarySearch(indices, fieldPath);
-    }
-
-    public ObservableEntityProperty getPropertyForFieldPath(FieldPath fieldPath) {
-        return properties.get(getIndexForFieldPath(fieldPath));
-    }
-
-    public <T> ObjectBinding<T> getPropertyBinding(Class<T> propertyClass, String property, T defaultValue) {
-        FieldPath fp = entity.getDtClass().getFieldPathForName(property);
-        if (fp == null) {
-            return Bindings.createObjectBinding(() -> defaultValue);
-        } else {
-            ObjectBinding<T> ob = getPropertyForFieldPath(fp).rawProperty();
-            return Bindings.createObjectBinding(() -> ob.get(), ob);
-        }
-    }
-
-    private void ensureChangeOpen() {
-        if (!changeActive) {
-            changeActive = true;
-            beginChange();
-        }
-    }
-
-    void commitChange() {
-        if (changeActive) {
-            changeActive = false;
-            endChange();
-        }
-        for (ObservableEntityProperty property : properties) {
-            if (property.isDirty()) {
-                property.valueProperty().invalidate();
-                property.rawProperty().invalidate();
-                property.setDirty(false);
-            }
-        }
-    }
-
-    void update(FieldPath[] fieldPaths, int num) {
-        for (int i = 0; i < num; i++) {
-            int idx = getIndexForFieldPath(fieldPaths[i]);
-            if (idx < 0) {
-                ensureChangeOpen();
-                idx = - idx - 1;
-                indices.add(idx, fieldPaths[i]);
-                properties.add(idx, new ObservableEntityProperty(entity, fieldPaths[i]));
-                nextAdd(idx, idx);
-            } else {
-                properties.get(idx).setDirty(true);
-            }
-        }
-    }
-
-    public String getIndex() {
+    public int getIndex() {
         return index.get();
     }
 
-    public StringProperty indexProperty() {
+    public ReadOnlyIntegerProperty indexProperty() {
         return index;
-    }
-
-    public void setIndex(String index) {
-        this.index.set(index);
     }
 
     public String getName() {
         return name.get();
     }
 
-    public StringProperty nameProperty() {
+    public ReadOnlyStringProperty nameProperty() {
         return name;
     }
 
-    public void setName(String name) {
-        this.name.set(name);
-    }
 
-    public Entity getEntity() {
-        return entity;
+    public <T> ObjectBinding<T> getPropertyBinding(Class<T> propertyClass, String name, T defaultValue) {
+        FieldPath fp = getDtClass().getFieldPathForName(name);
+        Integer idx = null;
+        if (fp != null) {
+            idx = getIndexForFieldPath(fp);
+            if (idx < 0) {
+                log.warn("property at fieldpath {} not found for property binding", fp);
+            }
+        }
+        if (idx == null) {
+            return Bindings.createObjectBinding(() -> defaultValue);
+        } else {
+            return properties.get(idx).valueProperty();
+        }
     }
 
     @Override
     public String toString() {
         return String.format("%s(%s)", getName(), getIndex());
     }
+
 }

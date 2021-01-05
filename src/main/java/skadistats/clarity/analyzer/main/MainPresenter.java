@@ -5,7 +5,7 @@ import javafx.animation.Interpolator;
 import javafx.animation.Transition;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
-import javafx.beans.property.ReadOnlyStringWrapper;
+import javafx.beans.binding.ObjectBinding;
 import javafx.collections.transformation.FilteredList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -33,7 +33,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import skadistats.clarity.analyzer.Main;
 import skadistats.clarity.analyzer.replay.ObservableEntity;
-import skadistats.clarity.analyzer.replay.ObservableEntityList;
 import skadistats.clarity.analyzer.replay.ObservableEntityProperty;
 import skadistats.clarity.analyzer.replay.ReplayController;
 
@@ -113,9 +112,15 @@ public class MainPresenter implements Initializable {
         labelLastTick.textProperty().bind(replayController.lastTickProperty().asString());
 
         TableColumn<ObservableEntity, String> entityTableIdColumn = (TableColumn<ObservableEntity, String>) entityTable.getColumns().get(0);
-        entityTableIdColumn.setCellValueFactory(param -> param.getValue() != null ? param.getValue().indexProperty() : new ReadOnlyStringWrapper(""));
+        entityTableIdColumn.setCellValueFactory(e -> e.getValue().indexProperty().asString());
         TableColumn<ObservableEntity, String> entityTableNameColumn = (TableColumn<ObservableEntity, String>) entityTable.getColumns().get(1);
-        entityTableNameColumn.setCellValueFactory(param -> param.getValue() != null ? param.getValue().nameProperty() : new ReadOnlyStringWrapper(""));
+        entityTableNameColumn.setCellValueFactory(
+                e -> {
+                    ObjectBinding<? extends ObservableEntity> src = Bindings.valueAt(replayController.getEntityList(), e.getValue().getIndex());
+                    return Bindings.createStringBinding(() -> src.get().getName(), src);
+                }
+        );
+
         entityTable.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             log.info("entity table selection from {} to {}", oldValue, newValue);
             detailTable.setItems(newValue);
@@ -129,7 +134,7 @@ public class MainPresenter implements Initializable {
         nameColumn.setCellValueFactory(param -> param.getValue().nameProperty());
         TableColumn<ObservableEntityProperty, String> valueColumn =
             (TableColumn<ObservableEntityProperty, String>) detailTable.getColumns().get(2);
-        valueColumn.setCellValueFactory(param -> param.getValue().valueProperty());
+        valueColumn.setCellValueFactory(param -> param.getValue().valueProperty().asString());
 
         valueColumn.setCellFactory(v -> new TableCell<ObservableEntityProperty, String>() {
             final Animation animation = new Transition() {
@@ -229,9 +234,9 @@ public class MainPresenter implements Initializable {
         }
         preferences.put("fileChooserPath", f.getParent());
         try {
-            ObservableEntityList entityList = replayController.load(f);
-            mapControl.setEntities(entityList);
-            filteredEntityList = entityList.filtered(filterFunc);
+            replayController.load(f);
+            mapControl.setEntities(replayController.getEntityList());
+            filteredEntityList = replayController.getEntityList().filtered(filterFunc);
             entityTable.setItems(filteredEntityList);
         } catch (Exception e) {
             e.printStackTrace();

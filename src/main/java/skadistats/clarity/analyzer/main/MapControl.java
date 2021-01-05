@@ -13,7 +13,7 @@ import skadistats.clarity.analyzer.main.icon.DefaultIcon;
 import skadistats.clarity.analyzer.main.icon.EntityIcon;
 import skadistats.clarity.analyzer.main.icon.HeroIcon;
 import skadistats.clarity.analyzer.replay.ObservableEntity;
-import skadistats.clarity.model.Entity;
+import skadistats.clarity.model.DTClass;
 import skadistats.clarity.model.FieldPath;
 
 import java.util.List;
@@ -56,17 +56,14 @@ public class MapControl extends Pane implements ListChangeListener<ObservableEnt
 
     @Override
     public void onChanged(Change<? extends ObservableEntity> change) {
-        while(change.next()) {
-            if(change.wasPermutated()) {
+        while (change.next()) {
+            if (change.wasUpdated() || change.wasPermutated() || change.wasReplaced()) {
                 clear(change.getFrom(), change.getTo());
                 add(change.getFrom(), change.getList().subList(change.getFrom(), change.getTo()));
-            } else {
-                if(change.wasRemoved()) {
-                    clear(change.getFrom(), change.getFrom() + change.getRemovedSize());
-                }
-                if(change.wasAdded()) {
-                    add(change.getFrom(), change.getAddedSubList());
-                }
+            } else if (change.wasRemoved()) {
+                clear(change.getFrom(), change.getFrom() + change.getRemovedSize());
+            } else if (change.wasAdded()) {
+                add(change.getFrom(), change.getAddedSubList());
             }
         }
     }
@@ -74,16 +71,16 @@ public class MapControl extends Pane implements ListChangeListener<ObservableEnt
     private void add(int from, List<? extends ObservableEntity> entities) {
         for (int i = 0; i < entities.size(); i++) {
             ObservableEntity oe = entities.get(i);
-            Entity e = oe.getEntity();
-            if (e == null) {
+            DTClass cls = oe.getDtClass();
+            if (cls == null) {
                 continue;
             }
-            FieldPath fp = e.getDtClass().getFieldPathForName("CBodyComponent.m_cellX");
+            FieldPath fp = cls.getFieldPathForName("CBodyComponent.m_cellX");
             if (fp == null) {
                 continue;
             }
 
-            String name = oe.getEntity().getDtClass().getDtName();
+            String name = oe.getDtClass().getDtName();
             EntityIcon icon;
             if (name.equals("CDOTAPlayer")) {
                 icon = new CameraIcon(oe);

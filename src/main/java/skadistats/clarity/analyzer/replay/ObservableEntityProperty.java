@@ -1,91 +1,60 @@
 package skadistats.clarity.analyzer.replay;
 
 import javafx.beans.binding.ObjectBinding;
-import javafx.beans.binding.StringBinding;
-import skadistats.clarity.model.Entity;
+import javafx.beans.property.ReadOnlyStringProperty;
+import javafx.beans.property.ReadOnlyStringWrapper;
 import skadistats.clarity.model.FieldPath;
 
-public class ObservableEntityProperty {
+import java.util.function.Supplier;
 
-    private final StringBinding index;
-    private final StringBinding name;
-    private final StringBinding value;
-    private final ObjectBinding raw;
-    private boolean dirty = false;
+public class ObservableEntityProperty implements Comparable<FieldPath> {
+
+    final FieldPath fp;
+    private final ReadOnlyStringProperty index;
+    private final ReadOnlyStringProperty name;
+    private final ObjectBinding value;
     private long lastChangedAt;
 
-    public ObservableEntityProperty(Entity entity, FieldPath fieldPath) {
-        index = new StringBinding() {
-            @Override
-            protected String computeValue() {
-                return fieldPath.toString();
-            }
-        };
-        name = new StringBinding() {
-            @Override
-            protected String computeValue() {
-                return entity.getDtClass().getNameForFieldPath(fieldPath);
-            }
-        };
-        value = new StringBinding() {
-            @Override
-            protected String computeValue() {
-                Object value = entity.getPropertyForFieldPath(fieldPath);
-                return value != null ? value.toString() : "-";
-            }
-        };
-        raw = new ObjectBinding() {
+    public ObservableEntityProperty(FieldPath fp, String name, Supplier<Object> valueSupplier) {
+        this.fp = fp;
+        this.index = new ReadOnlyStringWrapper(fp.toString());
+        this.name = new ReadOnlyStringWrapper(name);
+        this.value = new ObjectBinding() {
             @Override
             protected Object computeValue() {
-                return entity.getPropertyForFieldPath(fieldPath);
+                return valueSupplier.get();
+            }
+            @Override
+            protected void onInvalidating() {
+                lastChangedAt = System.currentTimeMillis();
             }
         };
     }
 
-    public String getIndex() {
-        return index.get();
-    }
-
-    public StringBinding indexProperty() {
+    public ReadOnlyStringProperty indexProperty() {
         return index;
     }
 
-    public String getName() {
-        return name.get();
-    }
-
-    public StringBinding nameProperty() {
+    public ReadOnlyStringProperty nameProperty() {
         return name;
     }
 
-    public String getValue() {
-        return value.get();
-    }
-
-    public StringBinding valueProperty() {
+    public ObjectBinding valueProperty() {
         return value;
-    }
-
-    public Object getRaw() {
-        return raw.get();
-    }
-
-    public <T> ObjectBinding<T> rawProperty() {
-        return raw;
     }
 
     public long getLastChangedAt() {
         return lastChangedAt;
     }
 
-    public boolean isDirty() {
-        return dirty;
+    @Override
+    public int compareTo(FieldPath o) {
+        return fp.compareTo(o);
     }
 
-    public void setDirty(boolean dirty) {
-        this.dirty = dirty;
-        if (dirty) {
-            lastChangedAt = System.currentTimeMillis();
-        }
+    @Override
+    public String toString() {
+        return String.format("%s %s", index.get(), name.get());
     }
+
 }

@@ -4,6 +4,7 @@ import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.IntegerBinding;
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -40,7 +41,8 @@ public class ReplayController {
 
     private Property<PropertySupportRunner> runner = new SimpleObjectProperty<>();
 
-    private IntegerBinding tick = Bindings.selectInteger(
+    private IntegerBinding tick =
+            Bindings.selectInteger(
             EasyBind.select(runner)
                     .selectObject(PropertySupportRunner::tickProperty)
                     .orElse(0)
@@ -53,6 +55,7 @@ public class ReplayController {
     );
 
     private BooleanProperty playing = new SimpleBooleanProperty(false);
+    private ObjectProperty<ObservableEntityList> entityList = new SimpleObjectProperty<>();
 
     public ReplayController(Slider slider) {
         this.slider = slider;
@@ -107,13 +110,13 @@ public class ReplayController {
         });
     }
 
-    public ObservableEntityList load(File f) throws IOException {
+    public void load(File f) throws IOException {
         haltIfRunning();
         PropertySupportRunner r = new PropertySupportRunner(new LiveSource(f.getAbsoluteFile().toString(), 30, TimeUnit.SECONDS));
         ObservableEntityList observableEntities = new ObservableEntityList(r.getEngineType());
         runner.setValue(r);
         r.runWith(this, observableEntities);
-        return observableEntities;
+        entityList.set(observableEntities);
     }
 
     public void haltIfRunning() {
@@ -158,6 +161,14 @@ public class ReplayController {
 
     public void setPlaying(boolean playing) {
         this.playing.set(playing);
+    }
+
+    public ObservableEntityList getEntityList() {
+        return entityList.get();
+    }
+
+    public ObjectProperty<ObservableEntityList> entityListProperty() {
+        return entityList;
     }
 
 }

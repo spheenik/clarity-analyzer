@@ -1,36 +1,25 @@
 package skadistats.clarity.analyzer.replay;
 
-import javafx.application.Platform;
 import javafx.collections.ObservableListBase;
+import skadistats.clarity.analyzer.util.PendingActionList;
+import skadistats.clarity.model.DTClass;
 import skadistats.clarity.model.EngineType;
 import skadistats.clarity.model.Entity;
 import skadistats.clarity.model.FieldPath;
+import skadistats.clarity.model.state.EntityState;
 import skadistats.clarity.processor.entities.OnEntityCreated;
 import skadistats.clarity.processor.entities.OnEntityDeleted;
+import skadistats.clarity.processor.entities.OnEntityPropertyCountChanged;
 import skadistats.clarity.processor.entities.OnEntityUpdated;
 import skadistats.clarity.processor.entities.OnEntityUpdatesCompleted;
 
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.ReentrantLock;
-
 public class ObservableEntityList extends ObservableListBase<ObservableEntity> {
 
-    private static final int CF_LIST = 0x01;
-    private static final int CF_PROP = 0x02;
-
-    private final ReentrantLock lock = new ReentrantLock();
-    private final Condition platformUpToDate = lock.newCondition();
-
-    private int changeFlag = 0;
-    private boolean resetInProgress = false;
-    private boolean syncRequested = false;
-
+    private final PendingActionList pendingActions = new PendingActionList("pendingActions");
     private ObservableEntity[] entities;
-    private ObservableEntity[] changes;
 
     public ObservableEntityList(EngineType engineType) {
         entities = new ObservableEntity[1 << engineType.getIndexBits()];
-        changes = new ObservableEntity[1 << engineType.getIndexBits()];
         for (int i = 0; i < entities.length; i++) {
             entities[i] = new ObservableEntity(i);
         }
@@ -46,103 +35,44 @@ public class ObservableEntityList extends ObservableListBase<ObservableEntity> {
         return entities.length;
     }
 
-    private void commitToPlatform() {
-        lock.lock();
-        try {
-            if ((changeFlag & CF_LIST) != 0) {
-                beginChange();
-                for (int i = 0; i < changes.length; i++) {
-                    if (changes[i] != null) {
-                        ObservableEntity old = entities[i];
-                        entities[i] = changes[i];
-                        changes[i] = null;
-                        nextSet(i, old);
-                    }
-                }
-                endChange();
-                changeFlag &= ~CF_LIST;
-            }
-            if ((changeFlag & CF_PROP) != 0) {
-                for (int i = 0; i < entities.length; i++) {
-                    if (entities[i] != null) {
-                        entities[i].commitChange();
-                    }
-                }
-                changeFlag &= ~CF_PROP;
-            }
-            syncRequested = false;
-            platformUpToDate.signal();
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    private void markChange(int type) {
-        if ((type & CF_LIST) != 0 && (changeFlag & CF_LIST) == 0) {
-            changeFlag |= CF_LIST;
-        }
-        if ((type & CF_PROP) != 0 && (changeFlag & CF_PROP) == 0) {
-            changeFlag |= CF_PROP;
-        }
-    }
-
-    private void requestSync() {
-        if (resetInProgress) {
-            return;
-        }
-        if (!syncRequested && changeFlag != 0) {
-            syncRequested = true;
-            Platform.runLater(this::commitToPlatform);
-        }
+    private void performUpdate(int i, ObservableEntity value) {
+        entities[i] = value;
+        nextUpdate(i);
     }
 
     @OnEntityCreated
     public void onCreate(Entity entity) {
-        lock.lock();
-        try {
-            markChange(CF_LIST);
-            int i = entity.getIndex();
-            //System.out.println("create " + i);
-            changes[i] = new ObservableEntity(entity);
-        } finally {
-            lock.unlock();
-        }
+        int i = entity.getIndex();
+        DTClass dtClass = entity.getDtClass();
+        EntityState state = entity.getState().copy();
+        pendingActions.add(() -> performUpdate(i, new ObservableEntity(i, dtClass, state)));
     }
 
     @OnEntityUpdated
     public void onUpdate(Entity entity, FieldPath[] fieldPaths, int num) {
-        lock.lock();
-        try {
-            markChange(CF_PROP);
-            int i = entity.getIndex();
-            ObservableEntity e = changes[i] == null ? entities[i] : changes[i];
-            e.update(fieldPaths, num);
-        } finally {
-            lock.unlock();
-        }
+        int i = entity.getIndex();
+        FieldPath[] fieldPathsCopy = new FieldPath[num];
+        System.arraycopy(fieldPaths, 0, fieldPathsCopy, 0, num);
+        EntityState state = entity.getState().copy();
+        pendingActions.add(() -> entities[i].performUpdate(fieldPathsCopy, state));
+    }
+
+    @OnEntityPropertyCountChanged
+    public void onPropertyCountChange(Entity entity) {
+        int i = entity.getIndex();
+        EntityState state = entity.getState().copy();
+        pendingActions.add(() -> entities[i].performCountChanged(state));
     }
 
     @OnEntityDeleted
     public void onDelete(Entity entity) {
-        lock.lock();
-        try {
-            markChange(CF_LIST);
-            int i = entity.getIndex();
-            //System.out.println("delete " + i);
-            changes[i] = new ObservableEntity(i);
-        } finally {
-            lock.unlock();
-        }
+        int i = entity.getIndex();
+        pendingActions.add(() -> performUpdate(i, new ObservableEntity(i)));
     }
 
     @OnEntityUpdatesCompleted
     public void onUpdatesCompleted() {
-        lock.lock();
-        try {
-            requestSync();
-        } finally {
-            lock.unlock();
-        }
+        pendingActions.schedule(this::beginChange, this::endChange);
     }
 
 }
