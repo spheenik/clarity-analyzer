@@ -20,9 +20,6 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.layout.AnchorPane;
-import javafx.scene.transform.Scale;
-import javafx.scene.transform.Translate;
 import javafx.stage.FileChooser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,11 +67,10 @@ public class MainPresenter implements Initializable {
     public TextField entityNameFilter;
 
     @FXML
-    public AnchorPane mapCanvasPane;
+    private MapControl mapControl;
 
     private Preferences preferences;
     private ReplayController replayController;
-    private MapControl mapControl;
     private FilteredList<ObservableEntity> filteredEntityList;
 
     private Predicate<ObservableEntity> allFilterFunc = new Predicate<ObservableEntity>() {
@@ -147,35 +143,12 @@ public class MainPresenter implements Initializable {
                 filteredEntityList.setPredicate(filterFunc);
             }
         });
-
-        mapControl = new MapControl();
-        mapCanvasPane.getChildren().add(mapControl);
-
-        mapCanvasPane.setTopAnchor(mapControl, 0.0);
-        mapCanvasPane.setBottomAnchor(mapControl, 0.0);
-        mapCanvasPane.setLeftAnchor(mapControl, 0.0);
-        mapCanvasPane.setRightAnchor(mapControl, 0.0);
-        mapCanvasPane.widthProperty().addListener(evt -> resizeMapControl());
-        mapCanvasPane.heightProperty().addListener(evt -> resizeMapControl());
-
     }
 
     private <S, V> void createTableCell(TableView<S> tableView, String header, Class<V> valueClass, Consumer<TableColumn<S, V>> columnInitializer) {
         TableColumn<S, V> column = new TableColumn<>(header);
         tableView.getColumns().add(column);
         columnInitializer.accept(column);
-    }
-
-    private void resizeMapControl() {
-        double scale = Math.min(mapCanvasPane.getWidth() / mapControl.getSize(), mapCanvasPane.getHeight() / mapControl.getSize());
-
-        double sw = mapControl.getSize() * scale;
-        double dx = mapCanvasPane.getWidth() - sw;
-        double dy = mapCanvasPane.getHeight() - sw;
-
-        mapCanvasPane.getTransforms().clear();
-        mapCanvasPane.getTransforms().add(new Scale(scale, scale));
-        mapCanvasPane.getTransforms().add(new Translate(0.5 * dx / scale, 0.5 * dy / scale));
     }
 
     public void actionQuit(ActionEvent actionEvent) {

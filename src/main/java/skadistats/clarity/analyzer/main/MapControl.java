@@ -1,12 +1,15 @@
 package skadistats.clarity.analyzer.main;
 
+import javafx.beans.binding.DoubleBinding;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
+import javafx.geometry.Bounds;
 import javafx.scene.Group;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
-import javafx.scene.layout.Pane;
+import javafx.scene.layout.Region;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
 import javafx.scene.transform.Scale;
+import javafx.scene.transform.Translate;
 import skadistats.clarity.analyzer.main.icon.BuildingIcon;
 import skadistats.clarity.analyzer.main.icon.CameraIcon;
 import skadistats.clarity.analyzer.main.icon.DefaultIcon;
@@ -18,38 +21,21 @@ import skadistats.clarity.model.FieldPath;
 
 import java.util.List;
 
-public class MapControl extends Pane implements ListChangeListener<ObservableEntity> {
+import static javafx.beans.binding.Bindings.createDoubleBinding;
 
-    public static final double MIN_X = -7500;
-    public static final double MAX_X = 7500;
-    public static final double MIN_Y = -7400;
-    public static final double MAX_Y = 7200;
+public class MapControl extends Region implements ListChangeListener<ObservableEntity> {
 
-    private final Image mapImage;
-    private final ImageView background;
-    private final Group icons;
-
+    private final IconContainer icons;
     private EntityIcon[] mapEntities;
 
     public MapControl() {
-        mapImage = new Image(getClass().getResourceAsStream("/images/minimap_686.jpg"));
-
-        double scale = getSize() / mapImage.getWidth();
-        background = new ImageView(mapImage);
-        background.getTransforms().add(new Scale(scale, scale));
-        getChildren().add(background);
-
-        icons = new Group();
+        icons = new IconContainer();
         getChildren().add(icons);
-    }
-
-    public double getSize() {
-        return MAX_Y - MIN_Y;
     }
 
     public void setEntities(ObservableList<ObservableEntity> entities) {
         mapEntities = new EntityIcon[entities.size()];
-        icons.getChildren().clear();
+        icons.empty();
         entities.addListener(this);
         add(0, entities);
     }
@@ -110,6 +96,64 @@ public class MapControl extends Pane implements ListChangeListener<ObservableEnt
                 mapEntities[i] = null;
             }
         }
+    }
+
+    public class IconContainer extends Group {
+
+        private final Rectangle background;
+
+        private final Translate translate = new Translate();
+        private final Scale scale = new Scale();
+
+        public IconContainer() {
+            background = new Rectangle();
+            background.setFill(Color.gray(0.1));
+            getChildren().add(background);
+
+            getTransforms().add(scale);
+            getTransforms().add(translate);
+
+            layoutBoundsProperty().addListener((observable, oldValue, newValue) -> {
+                background.setX(newValue.getMinX());
+                background.setY(newValue.getMinY());
+                background.setWidth(newValue.getWidth());
+                background.setHeight(newValue.getHeight());
+            });
+
+            DoubleBinding scaleBinding = createDoubleBinding(
+                    () -> {
+                        Bounds b = getLayoutBounds();
+                        return Math.min(getWidth() / b.getWidth(), getHeight() / b.getHeight());
+                    },
+                    widthProperty(),
+                    heightProperty(),
+                    layoutBoundsProperty()
+            );
+            scale.xProperty().bind(scaleBinding);
+            scale.yProperty().bind(scaleBinding);
+
+            translate.xProperty().bind(createDoubleBinding(
+                    () -> {
+                        Bounds b = getLayoutBounds();
+                        return -b.getMinX() + (getWidth() / scaleBinding.get() - b.getWidth()) * 0.5;
+                    },
+                    layoutBoundsProperty(),
+                    scaleBinding
+            ));
+            translate.yProperty().bind(createDoubleBinding(
+                    () -> {
+                        Bounds b = getLayoutBounds();
+                        return -b.getMinY() + (getHeight() / scaleBinding.get() - b.getHeight()) * 0.5;
+                    },
+                    layoutBoundsProperty(),
+                    scaleBinding
+            ));
+        }
+
+        void empty() {
+            getChildren().remove(1, getChildren().size());
+        }
+
     }
 
 }

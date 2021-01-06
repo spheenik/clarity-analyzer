@@ -8,7 +8,6 @@ import javafx.beans.binding.ObjectBinding;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.Shape;
-import skadistats.clarity.analyzer.main.MapControl;
 import skadistats.clarity.analyzer.replay.ObservableEntity;
 
 
@@ -51,20 +50,12 @@ public abstract class EntityIcon<T extends Shape> {
         return Bindings.selectDouble(oe.getPropertyBinding(Double.class, "CBodyComponent.m_vecY", 0.0));
     }
 
-    protected DoubleBinding getWorldX() {
-        return getCellX().multiply(128.0).add(getVecX());
-    }
-
-    protected DoubleBinding getWorldY() {
-        return getCellY().multiply(-128.0).subtract(getVecY()).add(32768.0);
-    }
-
     protected DoubleBinding getMapX() {
-        return getWorldX().subtract(16384.0).subtract(MapControl.MIN_X);
+        return getCellX().multiply(128.0).add(getVecX()).subtract(16384.0);
     }
 
     protected DoubleBinding getMapY() {
-        return getWorldY().subtract(16384.0).subtract(MapControl.MIN_Y);
+        return getCellY().multiply(-128.0).subtract(getVecY()).add(16384.0);
     }
 
     protected IntegerBinding getPlayerId() {
