@@ -1,8 +1,10 @@
 package skadistats.clarity.analyzer.main;
 
 import javafx.beans.binding.DoubleBinding;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.ListChangeListener;
-import javafx.collections.ObservableList;
 import javafx.geometry.Bounds;
 import javafx.scene.Group;
 import javafx.scene.layout.Region;
@@ -16,6 +18,7 @@ import skadistats.clarity.analyzer.main.icon.DefaultIcon;
 import skadistats.clarity.analyzer.main.icon.EntityIcon;
 import skadistats.clarity.analyzer.main.icon.HeroIcon;
 import skadistats.clarity.analyzer.replay.ObservableEntity;
+import skadistats.clarity.analyzer.replay.ObservableEntityList;
 import skadistats.clarity.model.DTClass;
 import skadistats.clarity.model.FieldPath;
 
@@ -23,25 +26,26 @@ import java.util.List;
 
 import static javafx.beans.binding.Bindings.createDoubleBinding;
 
-public class MapControl extends Region implements ListChangeListener<ObservableEntity> {
+public class MapControl extends Region {
 
+    private final ObjectProperty<ObservableEntityList> entityList = new SimpleObjectProperty<>();
     private final IconContainer icons;
     private EntityIcon[] mapEntities;
 
     public MapControl() {
         icons = new IconContainer();
         getChildren().add(icons);
+        entityList.addListener(this::onEntityListSet);
     }
 
-    public void setEntities(ObservableList<ObservableEntity> entities) {
-        mapEntities = new EntityIcon[entities.size()];
+    private void onEntityListSet(ObservableValue<? extends ObservableEntityList> observable, ObservableEntityList oldList, ObservableEntityList newList) {
         icons.empty();
-        entities.addListener(this);
-        add(0, entities);
+        mapEntities = new EntityIcon[newList.size()];
+        newList.addListener(this::onEntityListChanged);
+        add(0, newList);
     }
 
-    @Override
-    public void onChanged(Change<? extends ObservableEntity> change) {
+    private void onEntityListChanged(ListChangeListener.Change<? extends ObservableEntity> change) {
         while (change.next()) {
             if (change.wasUpdated() || change.wasPermutated() || change.wasReplaced()) {
                 clear(change.getFrom(), change.getTo());
@@ -96,6 +100,14 @@ public class MapControl extends Region implements ListChangeListener<ObservableE
                 mapEntities[i] = null;
             }
         }
+    }
+
+    public ObservableEntityList getEntityList() {
+        return entityList.get();
+    }
+
+    public ObjectProperty<ObservableEntityList> entityListProperty() {
+        return entityList;
     }
 
     public class IconContainer extends Group {

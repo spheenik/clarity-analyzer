@@ -1,8 +1,9 @@
 package skadistats.clarity.analyzer.main;
 
-import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.binding.ObjectBinding;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.transformation.FilteredList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -25,16 +26,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import skadistats.clarity.analyzer.Main;
 import skadistats.clarity.analyzer.replay.ObservableEntity;
+import skadistats.clarity.analyzer.replay.ObservableEntityList;
 import skadistats.clarity.analyzer.replay.ObservableEntityProperty;
 import skadistats.clarity.analyzer.replay.ReplayController;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.function.Consumer;
-import java.util.function.Predicate;
 import java.util.prefs.Preferences;
 import java.util.stream.Collectors;
 
+import static javafx.beans.binding.Bindings.createBooleanBinding;
+import static javafx.beans.binding.Bindings.createObjectBinding;
 import static javafx.beans.binding.Bindings.createStringBinding;
 import static javafx.beans.binding.Bindings.valueAt;
 
@@ -70,38 +72,38 @@ public class MainPresenter implements Initializable {
     private MapControl mapControl;
 
     private Preferences preferences;
+
     private ReplayController replayController;
-    private FilteredList<ObservableEntity> filteredEntityList;
-
-    private Predicate<ObservableEntity> allFilterFunc = new Predicate<ObservableEntity>() {
-        @Override
-        public boolean test(ObservableEntity e) {
-            return true;
-        }
-    };
-
-    private Predicate<ObservableEntity> filterFunc = new Predicate<ObservableEntity>() {
-        @Override
-        public boolean test(ObservableEntity e) {
-            String filter = entityNameFilter.getText();
-            if (filter.length() > 0) {
-                return e != null && e.getName().toLowerCase().contains(filter.toLowerCase());
-            }
-            return true;
-        }
-    };
+    private ObjectProperty<FilteredList<ObservableEntity>> filteredEntityList = new SimpleObjectProperty<>();
 
     public void initialize(java.net.URL location, java.util.ResourceBundle resources) {
         preferences = Preferences.userNodeForPackage(this.getClass());
         replayController = new ReplayController(slider);
 
-        BooleanBinding runnerIsNull = Bindings.createBooleanBinding(() -> replayController.getRunner() == null, replayController.runnerProperty());
+        BooleanBinding runnerIsNull = createBooleanBinding(() -> replayController.getRunner() == null, replayController.runnerProperty());
         buttonPlay.disableProperty().bind(runnerIsNull.or(replayController.playingProperty()));
         buttonPause.disableProperty().bind(runnerIsNull.or(replayController.playingProperty().not()));
         slider.disableProperty().bind(runnerIsNull);
 
         labelTick.textProperty().bind(replayController.tickProperty().asString());
         labelLastTick.textProperty().bind(replayController.lastTickProperty().asString());
+
+        // filtered entity list
+        filteredEntityList.bind(createObjectBinding(() -> {
+                    ObservableEntityList src = replayController.getEntityList();
+                    if (src == null) return null;
+                    FilteredList<ObservableEntity> fel = new FilteredList<>(src);
+                    fel.predicateProperty().bind(createObjectBinding(() -> {
+                                String filter = entityNameFilter.getText();
+                                if (filter.isEmpty()) return null;
+                                return e -> e.getName().toLowerCase().contains(filter.toLowerCase());
+                            },
+                            entityNameFilter.textProperty()
+                    ));
+                    return fel;
+                },
+                replayController.entityListProperty()
+        ));
 
         // entity table
         createTableCell(entityTable, "#", String.class, col ->
@@ -117,6 +119,7 @@ public class MainPresenter implements Initializable {
             log.info("entity table selection from {} to {}", oldValue, newValue);
             detailTable.setItems(newValue);
         });
+        entityTable.itemsProperty().bind(filteredEntityList);
 
         // detail table
         createTableCell(detailTable, "#", String.class, col ->
@@ -136,13 +139,8 @@ public class MainPresenter implements Initializable {
         detailTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         detailTable.setOnKeyPressed(this::handleDetailTableKeyPressed);
 
-
-        entityNameFilter.textProperty().addListener(observable -> {
-            if (filteredEntityList != null) {
-                filteredEntityList.setPredicate(allFilterFunc);
-                filteredEntityList.setPredicate(filterFunc);
-            }
-        });
+        // map control
+        mapControl.entityListProperty().bind(replayController.entityListProperty());
     }
 
     private <S, V> void createTableCell(TableView<S> tableView, String header, Class<V> valueClass, Consumer<TableColumn<S, V>> columnInitializer) {
@@ -156,7 +154,7 @@ public class MainPresenter implements Initializable {
         Main.primaryStage.close();
     }
 
-    public void actionOpen(ActionEvent actionEvent) throws IOException {
+    public void actionOpen(ActionEvent actionEvent) {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Load a replay");
         fileChooser.getExtensionFilters().addAll(
@@ -168,20 +166,12 @@ public class MainPresenter implements Initializable {
             dir = new File(".");
         }
         fileChooser.setInitialDirectory(dir);
-        File f = fileChooser.showOpenDialog(Main.primaryStage);
-        if (f == null) {
+        File replayFile = fileChooser.showOpenDialog(Main.primaryStage);
+        if (replayFile == null) {
             return;
         }
-        preferences.put("fileChooserPath", f.getParent());
-        try {
-            replayController.load(f);
-            mapControl.setEntities(replayController.getEntityList());
-            filteredEntityList = replayController.getEntityList().filtered(filterFunc);
-            entityTable.setItems(filteredEntityList);
-        } catch (Exception e) {
-            e.printStackTrace();
-            new ExceptionDialog(e).show();
-        }
+        preferences.put("fileChooserPath", replayFile.getParent());
+        replayController.load(replayFile);
     }
 
     public void clickPlay(ActionEvent actionEvent) {

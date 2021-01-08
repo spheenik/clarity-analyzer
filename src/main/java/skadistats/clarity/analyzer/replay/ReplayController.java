@@ -14,6 +14,7 @@ import org.fxmisc.easybind.EasyBind;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import skadistats.clarity.analyzer.Main;
+import skadistats.clarity.analyzer.main.ExceptionDialog;
 import skadistats.clarity.io.Util;
 import skadistats.clarity.processor.entities.UsesEntities;
 import skadistats.clarity.source.LiveSource;
@@ -110,13 +111,18 @@ public class ReplayController {
         });
     }
 
-    public void load(File f) throws IOException {
-        haltIfRunning();
-        PropertySupportRunner r = new PropertySupportRunner(new LiveSource(f.getAbsoluteFile().toString(), 30, TimeUnit.SECONDS));
-        ObservableEntityList observableEntities = new ObservableEntityList(r.getEngineType());
-        runner.setValue(r);
-        r.runWith(this, observableEntities);
-        entityList.set(observableEntities);
+    public void load(File f) {
+        try {
+            haltIfRunning();
+            PropertySupportRunner r = new PropertySupportRunner(new LiveSource(f.getAbsoluteFile().toString(), 30, TimeUnit.SECONDS));
+            ObservableEntityList observableEntities = new ObservableEntityList(r.getEngineType());
+            runner.setValue(r);
+            r.runWith(this, observableEntities);
+            entityList.set(observableEntities);
+        } catch (Exception e) {
+            e.printStackTrace();
+            new ExceptionDialog(e).show();
+        }
     }
 
     public void haltIfRunning() {
@@ -139,20 +145,12 @@ public class ReplayController {
         return runner;
     }
 
-    public void setRunner(PropertySupportRunner runner) {
-        this.runner.setValue(runner);
-    }
-
     public IntegerBinding lastTickProperty() {
         return lastTick;
     }
 
     public IntegerBinding tickProperty() {
         return tick;
-    }
-
-    public boolean getPlaying() {
-        return playing.get();
     }
 
     public BooleanProperty playingProperty() {
