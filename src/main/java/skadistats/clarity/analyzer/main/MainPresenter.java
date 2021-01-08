@@ -132,7 +132,7 @@ public class MainPresenter implements Initializable {
                 col.setCellValueFactory(f -> f.getValue().nameProperty())
         );
         createTableCell(detailTable, "value", String.class, col -> {
-                    col.setCellValueFactory(f -> f.getValue().valueProperty().asString());
+                    col.setCellValueFactory(f -> f.getValue().valueAsStringProperty());
                     col.setCellFactory(v -> new EntityValueTableCell());
                 }
         );

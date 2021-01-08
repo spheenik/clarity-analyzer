@@ -38,6 +38,7 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
     public ObservableEntity(int index, DTClass dtClass, EntityState state) {
         this.dtClass = dtClass;
         this.index = new ReadOnlyIntegerWrapper(index);
+        this.state = state;
         if (dtClass != null) {
             this.name = new ReadOnlyStringWrapper(dtClass.getDtName());
             this.properties = createProperties(state);
@@ -45,7 +46,6 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
             this.name = new ReadOnlyStringWrapper("");
             this.properties = null;
         }
-        this.state = state;
     }
 
     private List<ObservableEntityProperty> createProperties(EntityState state) {
