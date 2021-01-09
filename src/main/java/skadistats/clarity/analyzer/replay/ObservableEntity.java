@@ -1,6 +1,5 @@
 package skadistats.clarity.analyzer.replay;
 
-import javafx.beans.binding.Bindings;
 import javafx.beans.binding.ObjectBinding;
 import javafx.beans.property.ReadOnlyIntegerProperty;
 import javafx.beans.property.ReadOnlyIntegerWrapper;
@@ -8,6 +7,7 @@ import javafx.beans.property.ReadOnlyStringProperty;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.ObservableListBase;
 import lombok.extern.slf4j.Slf4j;
+import org.fxmisc.easybind.EasyBind;
 import skadistats.clarity.io.s2.Field;
 import skadistats.clarity.io.s2.S2DTClass;
 import skadistats.clarity.model.DTClass;
@@ -28,6 +28,7 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
     private final ReadOnlyStringProperty name;
 
     private final List<ObservableEntityProperty> properties;
+    private List<ObservableEntityPropertyBinding> propertyBindings;
 
     private EntityState state;
 
@@ -39,6 +40,7 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
         this.dtClass = dtClass;
         this.index = new ReadOnlyIntegerWrapper(index);
         this.state = state;
+        this.propertyBindings = null;
         if (dtClass != null) {
             this.name = new ReadOnlyStringWrapper(dtClass.getDtName());
             this.properties = createProperties(state);
@@ -76,7 +78,7 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
     void performUpdate(FieldPath[] fieldPaths, EntityState state) {
         this.state = state;
         for (FieldPath fp : fieldPaths) {
-            int idx = getIndexForFieldPath(fp);
+            int idx = Collections.binarySearch(properties, fp);
             if (idx < 0) {
                 // we can assume the field path to not be found only for Source 2
                 Field field = ((S2DTClass) dtClass).getFieldForFieldPath(fp.s2());
@@ -88,10 +90,6 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
             ObservableEntityProperty property = properties.get(idx);
             property.valueProperty().invalidate();
         }
-    }
-
-    public int getIndexForFieldPath(FieldPath fp) {
-        return Collections.binarySearch(properties, fp);
     }
 
     public void performCountChanged(EntityState state) {
@@ -138,6 +136,15 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
             return right != null && (left == null || left.compareTo(right) > 0);
         }
 
+        private void invalidateAkkuPropertyBindings() {
+            if (propertyBindings == null) return;
+            for (ObservableEntityProperty p : akku) {
+                int idx = Collections.binarySearch(propertyBindings, p.getFieldPath());
+                if (idx < 0) continue;
+                propertyBindings.get(idx).invalidate();
+            }
+        }
+
         private void updateCount() {
             advanceLeft();
             advanceRight();
@@ -155,6 +162,7 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
                     properties.addAll(rightIdx, akku);
                     nextAdd(rightIdx, rightIdx + n);
                     rightIdx += n;
+                    invalidateAkkuPropertyBindings();
                     akku.clear();
                 } else if (leftHigher()) {
                     int baseIdx = rightIdx;
@@ -166,6 +174,7 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
                     properties.removeAll(akku);
                     nextRemove(baseIdx, akku);
                     rightIdx -= n;
+                    invalidateAkkuPropertyBindings();
                     akku.clear();
                 } else {
                     throw new UnsupportedOperationException("should never happen");
@@ -204,21 +213,48 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
         return name;
     }
 
+    public class ObservableEntityPropertyBinding extends ObjectBinding<ObservableEntityProperty> implements Comparable<FieldPath> {
+        private final FieldPath fp;
+        private ObservableEntityPropertyBinding(FieldPath fp) {
+            this.fp = fp;
+        }
+        @Override
+        protected ObservableEntityProperty computeValue() {
+            int idx = Collections.binarySearch(properties, fp);
+            if (idx < 0) return null;
+            return properties.get(idx);
+        }
+        @Override
+        public int compareTo(FieldPath o) {
+            return fp.compareTo(o);
+        }
+    }
+
+    public ObservableEntityPropertyBinding getPropertyBinding(FieldPath fp) {
+        if (propertyBindings == null) {
+            propertyBindings = new ArrayList<>();
+        }
+        int idx = Collections.binarySearch(propertyBindings, fp);
+        if (idx >= 0) return propertyBindings.get(idx);
+        ObservableEntityPropertyBinding binding = new ObservableEntityPropertyBinding(fp);
+        propertyBindings.add(-idx - 1, binding);
+        return binding;
+    }
 
     public <T> ObjectBinding<T> getPropertyBinding(Class<T> propertyClass, String name, T defaultValue) {
-        FieldPath fp = getDtClass().getFieldPathForName(name);
-        Integer idx = null;
-        if (fp != null) {
-            idx = getIndexForFieldPath(fp);
-            if (idx < 0) {
-                log.warn("property at fieldpath {} not found for property binding", fp);
+        ObjectBinding<T> defaultBinding = new ObjectBinding<T>() {
+            @Override
+            protected T computeValue() {
+                return defaultValue;
             }
-        }
-        if (idx == null) {
-            return Bindings.createObjectBinding(() -> defaultValue);
-        } else {
-            return properties.get(idx).valueProperty();
-        }
+        };
+        FieldPath fp = getDtClass().getFieldPathForName(name);
+        if (fp == null) return defaultBinding;
+        ObservableEntityPropertyBinding propertyBinding = getPropertyBinding(fp);
+        return (ObjectBinding<T>) EasyBind.select(propertyBinding)
+                .selectObject(ObservableEntityProperty::valueProperty)
+                .map(propertyClass::cast)
+                .orElse(defaultBinding);
     }
 
     @Override

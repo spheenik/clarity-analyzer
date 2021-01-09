@@ -1,9 +1,10 @@
 package skadistats.clarity.analyzer.main.icon;
 
 import javafx.beans.binding.Bindings;
-import javafx.beans.binding.DoubleBinding;
+import javafx.beans.binding.FloatBinding;
 import javafx.beans.binding.IntegerBinding;
 import javafx.beans.binding.LongBinding;
+import javafx.beans.binding.NumberBinding;
 import javafx.beans.binding.ObjectBinding;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
@@ -42,20 +43,20 @@ public abstract class EntityIcon<T extends Shape> {
         return Bindings.selectInteger(oe.getPropertyBinding(Integer.class, "CBodyComponent.m_cellY", 0));
     }
 
-    protected DoubleBinding getVecX() {
-        return Bindings.selectDouble(oe.getPropertyBinding(Double.class, "CBodyComponent.m_vecX", 0.0));
+    protected FloatBinding getVecX() {
+        return Bindings.selectFloat(oe.getPropertyBinding(Float.class, "CBodyComponent.m_vecX", 0.0f));
     }
 
-    protected DoubleBinding getVecY() {
-        return Bindings.selectDouble(oe.getPropertyBinding(Double.class, "CBodyComponent.m_vecY", 0.0));
+    protected FloatBinding getVecY() {
+        return Bindings.selectFloat(oe.getPropertyBinding(Float.class, "CBodyComponent.m_vecY", 0.0f));
     }
 
-    protected DoubleBinding getMapX() {
-        return getCellX().multiply(128.0).add(getVecX()).subtract(16384.0);
+    protected NumberBinding getMapX() {
+        return getCellX().multiply(128.0f).add(getVecX()).subtract(16384.0f);
     }
 
-    protected DoubleBinding getMapY() {
-        return getCellY().multiply(-128.0).subtract(getVecY()).add(16384.0);
+    protected NumberBinding getMapY() {
+        return getCellY().multiply(-128.0f).subtract(getVecY()).add(16384.0f);
     }
 
     protected IntegerBinding getPlayerId() {
