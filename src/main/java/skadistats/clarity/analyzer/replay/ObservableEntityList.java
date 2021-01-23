@@ -15,10 +15,12 @@ import skadistats.clarity.processor.entities.OnEntityUpdatesCompleted;
 
 public class ObservableEntityList extends ObservableListBase<ObservableEntity> {
 
+    private final EngineType engineType;
     private final PendingActionList pendingActions = new PendingActionList("pendingActions");
     private ObservableEntity[] entities;
 
     public ObservableEntityList(EngineType engineType) {
+        this.engineType = engineType;
         entities = new ObservableEntity[1 << engineType.getIndexBits()];
         for (int i = 0; i < entities.length; i++) {
             entities[i] = new ObservableEntity(i);
@@ -35,13 +37,17 @@ public class ObservableEntityList extends ObservableListBase<ObservableEntity> {
         return entities.length;
     }
 
+    public EngineType getEngineType() {
+        return engineType;
+    }
+
     private void performUpdate(int i, ObservableEntity value) {
         entities[i] = value;
         nextUpdate(i);
     }
 
     @OnEntityCreated
-    public void onCreate(Entity entity) {
+    protected void onCreate(Entity entity) {
         int i = entity.getIndex();
         DTClass dtClass = entity.getDtClass();
         EntityState state = entity.getState().copy();
@@ -49,7 +55,7 @@ public class ObservableEntityList extends ObservableListBase<ObservableEntity> {
     }
 
     @OnEntityUpdated
-    public void onUpdate(Entity entity, FieldPath[] fieldPaths, int num) {
+    protected void onUpdate(Entity entity, FieldPath[] fieldPaths, int num) {
         int i = entity.getIndex();
         FieldPath[] fieldPathsCopy = new FieldPath[num];
         System.arraycopy(fieldPaths, 0, fieldPathsCopy, 0, num);
@@ -58,20 +64,20 @@ public class ObservableEntityList extends ObservableListBase<ObservableEntity> {
     }
 
     @OnEntityPropertyCountChanged
-    public void onPropertyCountChange(Entity entity) {
+    protected void onPropertyCountChange(Entity entity) {
         int i = entity.getIndex();
         EntityState state = entity.getState().copy();
         pendingActions.add(() -> entities[i].performCountChanged(state));
     }
 
     @OnEntityDeleted
-    public void onDelete(Entity entity) {
+    protected void onDelete(Entity entity) {
         int i = entity.getIndex();
         pendingActions.add(() -> performUpdate(i, new ObservableEntity(i)));
     }
 
     @OnEntityUpdatesCompleted
-    public void onUpdatesCompleted() {
+    protected void onUpdatesCompleted() {
         pendingActions.schedule(this::beginChange, this::endChange);
     }
 

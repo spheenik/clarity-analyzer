@@ -25,6 +25,7 @@ import javafx.stage.FileChooser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import skadistats.clarity.analyzer.Main;
+import skadistats.clarity.analyzer.map.MapControl;
 import skadistats.clarity.analyzer.replay.ObservableEntity;
 import skadistats.clarity.analyzer.replay.ObservableEntityList;
 import skadistats.clarity.analyzer.replay.ObservableEntityProperty;

@@ -1,10 +1,12 @@
-package skadistats.clarity.analyzer.main.icon;
+package skadistats.clarity.analyzer.map.icon.dota;
 
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.DoubleBinding;
 import javafx.beans.binding.IntegerBinding;
 import javafx.beans.binding.ObjectBinding;
 import javafx.scene.shape.Polygon;
+import skadistats.clarity.analyzer.map.binding.BindingGenerator;
+import skadistats.clarity.analyzer.map.icon.EntityIcon;
 import skadistats.clarity.analyzer.replay.ObservableEntity;
 import skadistats.clarity.model.Vector;
 
@@ -15,8 +17,8 @@ public class PointingHeroIcon extends EntityIcon<Polygon> {
 
     private final Polygon shape;
 
-    public PointingHeroIcon(ObservableEntity oe) {
-        super(oe);
+    public PointingHeroIcon(BindingGenerator bg, ObservableEntity oe) {
+        super(bg, oe);
 
         shape = new Polygon(
             0, -200, -120, 200, 120, 200
