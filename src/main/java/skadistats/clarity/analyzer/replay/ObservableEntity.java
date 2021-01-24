@@ -83,7 +83,7 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
                 // we can assume the field path to not be found only for Source 2
                 Field field = ((S2DTClass) dtClass).getFieldForFieldPath(fp.s2());
                 if (!field.isHiddenFieldPath()) {
-                    log.warn("property at fieldpath {} for entity {} not found for update", fp, getName());
+                    log.warn("property at fieldpath {} for entity {} ({}) not found for update", fp, getName(), getIndex());
                 }
                 continue;
             }
