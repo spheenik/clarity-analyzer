@@ -117,11 +117,16 @@
                </children></AnchorPane>
           <AnchorPane>
                <children>
-                  <TableView fx:id="detailTable" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
-                     <columnResizePolicy>
-                        <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
-                     </columnResizePolicy>
-                  </TableView>
+                  <SplitPane dividerPositions="0.6" orientation="VERTICAL" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                      <items>
+                          <TableView fx:id="detailTable" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                             <columnResizePolicy>
+                                <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                             </columnResizePolicy>
+                          </TableView>
+                          <TextField fx:id="propertyNameFilter" />
+                      </items>
+                  </SplitPane>
                </children>
           </AnchorPane>
         </items>

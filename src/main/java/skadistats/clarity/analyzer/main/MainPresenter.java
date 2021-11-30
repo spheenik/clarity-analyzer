@@ -4,6 +4,8 @@ import javafx.beans.binding.BooleanBinding;
 import javafx.beans.binding.ObjectBinding;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -70,12 +72,16 @@ public class MainPresenter implements Initializable {
     public TextField entityNameFilter;
 
     @FXML
+    public TextField propertyNameFilter;
+
+    @FXML
     private MapControl mapControl;
 
     private Preferences preferences;
 
     private ReplayController replayController;
     private ObjectProperty<FilteredList<ObservableEntity>> filteredEntityList = new SimpleObjectProperty<>();
+    private ObjectProperty<FilteredList<ObservableEntityProperty>> filteredPropertyList = new SimpleObjectProperty<>();
 
     public void initialize(java.net.URL location, java.util.ResourceBundle resources) {
         preferences = Preferences.userNodeForPackage(this.getClass());
@@ -118,9 +124,16 @@ public class MainPresenter implements Initializable {
         );
         entityTable.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             log.info("entity table selection from {} to {}", oldValue, newValue);
-            detailTable.setItems(newValue);
+            ObservableList<ObservableEntityProperty> newList = newValue == null ? FXCollections.emptyObservableList() : newValue;
+            filteredPropertyList.set(new FilteredList<>(newList));
+            propertyNameFilter.clear();
         });
         entityTable.itemsProperty().bind(filteredEntityList);
+
+        // filter property list
+        propertyNameFilter.textProperty().addListener((observable, oldValue, newValue)-> {
+            filteredPropertyList.get().setPredicate(p -> p.getName().toLowerCase().contains(newValue.toLowerCase()));
+        });
 
         // detail table
         createTableCell(detailTable, "#", String.class, col ->
@@ -139,6 +152,7 @@ public class MainPresenter implements Initializable {
         );
         detailTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         detailTable.setOnKeyPressed(this::handleDetailTableKeyPressed);
+        detailTable.itemsProperty().bind(filteredPropertyList);
 
         // map control
         mapControl.entityListProperty().bind(replayController.entityListProperty());
