@@ -6,6 +6,8 @@ JavaFX-Application to interactively visualize the raw data of a Dota 2 replay.
 
 # Building
 
+Attention: Only builds and runs with Java 8 atm!
+
 `mvn package`
 
 # Running
