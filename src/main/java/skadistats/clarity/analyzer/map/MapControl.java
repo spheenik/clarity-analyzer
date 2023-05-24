@@ -50,9 +50,9 @@ public class MapControl extends Region {
 
     private BindingGenerator determineBindingGenerator(EngineType engineType) {
         switch (engineType.getId()) {
-            case SOURCE1:
+            case DOTA_S1:
                 return new DotaS1BindingGenerator();
-            case SOURCE2:
+            case DOTA_S2:
                 return new DotaS2BindingGenerator();
             default:
                 return null;
