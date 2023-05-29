@@ -5,12 +5,13 @@ import javafx.beans.binding.FloatBinding;
 import javafx.beans.binding.IntegerBinding;
 import javafx.beans.binding.LongBinding;
 import javafx.beans.binding.ObjectBinding;
+import javafx.beans.value.ObservableFloatValue;
+import javafx.beans.value.ObservableValue;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.Shape;
-import skadistats.clarity.analyzer.map.binding.BindingGenerator;
+import skadistats.clarity.analyzer.map.position.PositionBinder;
 import skadistats.clarity.analyzer.replay.ObservableEntity;
-
 
 public abstract class EntityIcon<T extends Shape> {
 
@@ -27,30 +28,26 @@ public abstract class EntityIcon<T extends Shape> {
             Color.web("#9e6601")
     };
 
-    private final BindingGenerator bg;
+    private final PositionBinder pb;
     private final ObservableEntity oe;
 
-    public EntityIcon(BindingGenerator bg, ObservableEntity oe) {
-        this.bg = bg;
+    public EntityIcon(PositionBinder pb, ObservableEntity oe) {
+        this.pb = pb;
         this.oe = oe;
     }
 
     public abstract T getShape();
 
-    protected FloatBinding getMapX() {
-        return getMapX("");
+    protected ObservableValue<Float> getMapX() {
+        return pb.getMapX(oe);
     }
 
-    protected FloatBinding getMapX(String prefix) {
-        return bg.getMapX(prefix, oe);
+    protected ObservableValue<Float> getMapY() {
+        return pb.getMapY(oe);
     }
 
-    protected FloatBinding getMapY() {
-        return getMapY("");
-    }
-
-    protected FloatBinding getMapY(String prefix) {
-        return bg.getMapY(prefix, oe);
+    protected ObservableValue<Float> getRotation() {
+        return pb.getRotation(oe);
     }
 
     protected IntegerBinding getPlayerId() {

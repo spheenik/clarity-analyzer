@@ -5,6 +5,7 @@ import javafx.beans.property.ReadOnlyIntegerProperty;
 import javafx.beans.property.ReadOnlyIntegerWrapper;
 import javafx.beans.property.ReadOnlyStringProperty;
 import javafx.beans.property.ReadOnlyStringWrapper;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableListBase;
 import lombok.extern.slf4j.Slf4j;
 import org.fxmisc.easybind.EasyBind;
@@ -25,20 +26,20 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
 
     private final DTClass dtClass;
     private final ReadOnlyIntegerProperty index;
+    private final ReadOnlyIntegerWrapper serial;
     private final ReadOnlyStringProperty name;
-
     private final List<ObservableEntityProperty> properties;
     private List<ObservableEntityPropertyBinding> propertyBindings;
 
     private EntityState state;
 
     public ObservableEntity(int index) {
-        this(index, null, null);
+        this(index, 0, null, null);
     }
-
-    public ObservableEntity(int index, DTClass dtClass, EntityState state) {
+    public ObservableEntity(int index, int serial, DTClass dtClass, EntityState state) {
         this.dtClass = dtClass;
         this.index = new ReadOnlyIntegerWrapper(index);
+        this.serial = new ReadOnlyIntegerWrapper(serial);
         this.state = state;
         this.propertyBindings = null;
         if (dtClass != null) {
@@ -146,6 +147,14 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
         return index;
     }
 
+    public int getSerial() {
+        return serial.get();
+    }
+
+    public ReadOnlyIntegerWrapper serialProperty() {
+        return serial;
+    }
+
     public String getName() {
         return name.get();
     }
@@ -182,7 +191,7 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
         return binding;
     }
 
-    public <T> ObjectBinding<T> getPropertyBinding(Class<T> propertyClass, String name, T defaultValue) {
+    public <T> ObservableValue<T> getPropertyBinding(Class<T> propertyClass, String name, T defaultValue) {
         ObjectBinding<T> defaultBinding = new ObjectBinding<T>() {
             @Override
             protected T computeValue() {

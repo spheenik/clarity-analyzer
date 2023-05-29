@@ -2,9 +2,11 @@ package skadistats.clarity.analyzer.map.icon.dota;
 
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Polygon;
-import skadistats.clarity.analyzer.map.binding.BindingGenerator;
 import skadistats.clarity.analyzer.map.icon.EntityIcon;
+import skadistats.clarity.analyzer.map.position.PositionBinder;
 import skadistats.clarity.analyzer.replay.ObservableEntity;
+
+import static javafx.beans.binding.Bindings.selectFloat;
 
 public class CameraIcon extends EntityIcon<Polygon> {
 
@@ -13,8 +15,8 @@ public class CameraIcon extends EntityIcon<Polygon> {
 
     private final Polygon shape;
 
-    public CameraIcon(BindingGenerator bg, ObservableEntity oe, String prefix) {
-        super(bg, oe);
+    public CameraIcon(PositionBinder pb, ObservableEntity oe) {
+        super(pb, oe);
 
         int w = W/2;
         int h = H/2;
@@ -23,8 +25,8 @@ public class CameraIcon extends EntityIcon<Polygon> {
         shape.setStrokeWidth(20);
         shape.strokeProperty().bind(getPlayerColor());
 
-        shape.translateXProperty().bind(getMapX(prefix).subtract(W/2));
-        shape.translateYProperty().bind(getMapY(prefix).subtract(H));
+        shape.translateXProperty().bind(selectFloat(getMapX()).subtract(W/2));
+        shape.translateYProperty().bind(selectFloat(getMapY()).subtract(H));
     }
 
     @Override

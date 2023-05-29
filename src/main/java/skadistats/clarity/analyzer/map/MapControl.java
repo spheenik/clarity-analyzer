@@ -13,13 +13,13 @@ import javafx.scene.shape.Rectangle;
 import javafx.scene.transform.Scale;
 import javafx.scene.transform.Translate;
 import skadistats.clarity.analyzer.map.binding.BindingGenerator;
+import skadistats.clarity.analyzer.map.binding.CSGOS2BindingGenerator;
 import skadistats.clarity.analyzer.map.binding.DotaS1BindingGenerator;
 import skadistats.clarity.analyzer.map.binding.DotaS2BindingGenerator;
 import skadistats.clarity.analyzer.map.icon.EntityIcon;
 import skadistats.clarity.analyzer.replay.ObservableEntity;
 import skadistats.clarity.analyzer.replay.ObservableEntityList;
 import skadistats.clarity.model.DTClass;
-import skadistats.clarity.model.EngineType;
 
 import java.util.List;
 
@@ -40,7 +40,7 @@ public class MapControl extends Region {
 
     private void onEntityListSet(ObservableValue<? extends ObservableEntityList> observable, ObservableEntityList oldList, ObservableEntityList newList) {
         iconContainer.icons.getChildren().clear();
-        bindingGenerator = determineBindingGenerator(newList.getEngineType());
+        bindingGenerator = determineBindingGenerator(newList);
         if (bindingGenerator != null) {
             mapEntities = new EntityIcon[newList.size()];
             newList.addListener(this::onEntityListChanged);
@@ -48,12 +48,14 @@ public class MapControl extends Region {
         }
     }
 
-    private BindingGenerator determineBindingGenerator(EngineType engineType) {
-        switch (engineType.getId()) {
+    private BindingGenerator determineBindingGenerator(ObservableEntityList entityList) {
+        switch (entityList.getEngineType().getId()) {
             case DOTA_S1:
-                return new DotaS1BindingGenerator();
+                return new DotaS1BindingGenerator(entityList);
             case DOTA_S2:
-                return new DotaS2BindingGenerator();
+                return new DotaS2BindingGenerator(entityList);
+            case CSGO_S2:
+                return new CSGOS2BindingGenerator(entityList);
             default:
                 return null;
         }
@@ -79,12 +81,10 @@ public class MapControl extends Region {
             if (cls == null) {
                 continue;
             }
-            if (!bindingGenerator.hasPosition("", oe) && !bindingGenerator.hasPosition("dota_commentator_table.", oe)) {
+            EntityIcon icon = bindingGenerator.createEntityIcon(oe);
+            if (icon == null) {
                 continue;
             }
-
-            EntityIcon icon = bindingGenerator.createEntityIcon(oe);
-
             mapEntities[from + i] = icon;
             iconContainer.icons.getChildren().add(icon.getShape());
         }

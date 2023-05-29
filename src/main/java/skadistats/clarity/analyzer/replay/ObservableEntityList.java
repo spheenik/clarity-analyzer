@@ -1,5 +1,9 @@
 package skadistats.clarity.analyzer.replay;
 
+import javafx.beans.binding.Bindings;
+import javafx.beans.binding.IntegerBinding;
+import javafx.beans.binding.ObjectBinding;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableListBase;
 import skadistats.clarity.analyzer.util.PendingActionList;
 import skadistats.clarity.model.DTClass;
@@ -41,6 +45,38 @@ public class ObservableEntityList extends ObservableListBase<ObservableEntity> {
         return engineType;
     }
 
+    public ObservableValue<ObservableEntity> byHandleObs(ObservableValue<Integer> handleBinding) {
+        return Bindings.createObjectBinding(() -> {
+            Integer handle = handleBinding.getValue();
+            if (handle != null) {
+                int idx = engineType.indexForHandle(handle);
+                int serial = engineType.serialForHandle(handle);
+                ObservableEntity entityAtIdx = get(idx);
+                if (entityAtIdx != null) {
+                    if (entityAtIdx.getSerial() == serial) {
+                        return entityAtIdx;
+                    }
+                }
+            }
+            return null;
+        }, this, handleBinding);
+    }
+
+    public ObservableEntity byHandle(Integer handle) {
+        if (handle != null) {
+            int idx = engineType.indexForHandle(handle);
+            int serial = engineType.serialForHandle(handle);
+            ObservableEntity entityAtIdx = get(idx);
+            if (entityAtIdx != null) {
+                if (entityAtIdx.getSerial() == serial) {
+                    return entityAtIdx;
+                }
+            }
+        }
+        return null;
+    }
+
+
     private void performUpdate(int i, ObservableEntity value) {
         entities[i] = value;
         nextUpdate(i);
@@ -50,8 +86,9 @@ public class ObservableEntityList extends ObservableListBase<ObservableEntity> {
     protected void onCreate(Entity entity) {
         int i = entity.getIndex();
         DTClass dtClass = entity.getDtClass();
+        int serial = entity.getSerial();
         EntityState state = entity.getState().copy();
-        pendingActions.add(() -> performUpdate(i, new ObservableEntity(i, dtClass, state)));
+        pendingActions.add(() -> performUpdate(i, new ObservableEntity(i, serial, dtClass, state)));
     }
 
     @OnEntityUpdated
