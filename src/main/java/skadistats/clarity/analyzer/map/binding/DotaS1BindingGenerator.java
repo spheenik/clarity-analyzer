@@ -21,7 +21,7 @@ public class DotaS1BindingGenerator implements BindingGenerator {
     }
 
     @Override
-    public EntityIcon createEntityIcon(ObservableEntity oe) {
+    public EntityIcon<?> createEntityIcon(ObservableEntity oe) {
         String name = oe.getDtClass().getDtName();
         if (name.equals("DT_DOTAPlayer")) {
             return new CameraIcon(PB_PLAYER, oe);

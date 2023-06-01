@@ -5,6 +5,6 @@ import skadistats.clarity.analyzer.replay.ObservableEntity;
 
 public interface BindingGenerator {
 
-    EntityIcon createEntityIcon(ObservableEntity oe);
+    EntityIcon<?> createEntityIcon(ObservableEntity oe);
 
 }

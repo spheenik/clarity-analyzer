@@ -20,10 +20,12 @@ public class CSGOS2BindingGenerator implements BindingGenerator {
     }
 
     @Override
-    public EntityIcon createEntityIcon(ObservableEntity oe) {
+    public EntityIcon<?> createEntityIcon(ObservableEntity oe) {
         String name = oe.getDtClass().getDtName();
         if (name.equals("CCSPlayerController")) {
             return new PlayerIcon(PB_PLAYER, oe);
+        } else if (name.equals("CCSPlayerPawn")) {
+            return null;
         } else if (PB_STANDARD.hasPosition(oe)) {
             return new DefaultIcon(PB_STANDARD, oe);
         }
