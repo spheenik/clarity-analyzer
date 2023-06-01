@@ -35,7 +35,7 @@ class EntityValueTableCell extends TableCell<ObservableEntityProperty, String> {
         ObservableEntityProperty oep = (ObservableEntityProperty) getTableRow().getItem();
         if (oep != null) {
             animation.stop();
-            animation.playFrom(Duration.millis(System.currentTimeMillis() - oep.getLastChangedAt()));
+            animation.playFrom(Duration.millis(System.currentTimeMillis() - oep.getLastChangedAtMillis()));
         }
     }
 

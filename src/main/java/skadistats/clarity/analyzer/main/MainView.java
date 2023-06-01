@@ -71,7 +71,13 @@ public class MainView implements Initializable {
     public TextField entityNameFilter;
 
     @FXML
-    public CheckBox onlyFilledSlots;
+    public CheckBox hideEmptySlots;
+
+    @FXML
+    public TextField propertyNameFilter;
+
+    @FXML
+    public CheckBox onlyRecentlyUpdated;
 
     @FXML
     private MapControl mapControl;
@@ -79,7 +85,8 @@ public class MainView implements Initializable {
     private Preferences preferences;
 
     private ReplayController replayController;
-    private ObjectProperty<FilteredList<ObservableEntity>> filteredEntityList = new SimpleObjectProperty<>();
+    private final ObjectProperty<FilteredList<ObservableEntity>> filteredEntityList = new SimpleObjectProperty<>();
+    private final ObjectProperty<FilteredList<ObservableEntityProperty>> filteredPropertyList = new SimpleObjectProperty<>();
 
     public void initialize(java.net.URL location, java.util.ResourceBundle resources) {
         preferences = Preferences.userNodeForPackage(this.getClass());
@@ -95,22 +102,42 @@ public class MainView implements Initializable {
 
         // filtered entity list
         filteredEntityList.bind(createObjectBinding(() -> {
-                    ObservableEntityList src = replayController.getEntityList();
-                    if (src == null) return null;
-                    FilteredList<ObservableEntity> fel = new FilteredList<>(src);
-                    fel.predicateProperty().bind(createObjectBinding(() -> {
-                                String filter = entityNameFilter.getText();
-                            boolean onlySelected = onlyFilledSlots.isSelected();
-                            return e ->
-                                (!onlySelected || e.getDtClass() != null)
+                ObservableEntityList src = replayController.getEntityList();
+                if (src == null) return null;
+                FilteredList<ObservableEntity> filteredList = new FilteredList<>(src);
+                filteredList.predicateProperty().bind(createObjectBinding(() -> {
+                        String filter = entityNameFilter.getText();
+                        return e ->
+                            (!hideEmptySlots.isSelected() || e.getDtClass() != null)
                                 && (filter.isEmpty() || e.getName().toLowerCase().contains(filter.toLowerCase()));
-                            },
-                            entityNameFilter.textProperty(), onlyFilledSlots.selectedProperty()
-                    ));
-                    return fel;
-                },
-                replayController.entityListProperty()
+                    },
+                    entityNameFilter.textProperty(), hideEmptySlots.selectedProperty()
+                ));
+                return filteredList;
+            },
+            replayController.entityListProperty()
         ));
+
+        // filtered property list
+        filteredPropertyList.bind(createObjectBinding(() -> {
+                ObservableEntity src = entityTable.getSelectionModel().selectedItemProperty().get();
+                if (src == null) return null;
+                FilteredList<ObservableEntityProperty> filteredList = new FilteredList<>(src);
+                filteredList.predicateProperty().bind(createObjectBinding(() -> {
+                        String filter = propertyNameFilter.getText();
+                        return oe ->
+                            (!onlyRecentlyUpdated.isSelected() || Analyzer.currentTick - oe.getLastChangedAtTick() < 200)
+                                && (filter.isEmpty() || oe.getName().toLowerCase().contains(filter.toLowerCase()));
+                    },
+                    propertyNameFilter.textProperty(), onlyRecentlyUpdated.selectedProperty()
+                ));
+                return filteredList;
+            },
+            entityTable.getSelectionModel().selectedItemProperty()
+        ));
+
+        entityTable.itemsProperty().bind(filteredEntityList);
+        detailTable.itemsProperty().bind(filteredPropertyList);
 
         // entity table
         createTableCell(entityTable, "#", String.class, col ->
@@ -122,11 +149,6 @@ public class MainView implements Initializable {
                     return createStringBinding(() -> src.get().getName(), src);
                 })
         );
-        entityTable.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-            log.info("entity table selection from {} to {}", oldValue, newValue);
-            detailTable.setItems(newValue);
-        });
-        entityTable.itemsProperty().bind(filteredEntityList);
 
         // detail table
         createTableCell(detailTable, "#", String.class, col ->

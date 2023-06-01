@@ -2,10 +2,14 @@ package skadistats.clarity.analyzer.replay;
 
 import javafx.beans.binding.ObjectBinding;
 import javafx.beans.binding.StringBinding;
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.ReadOnlyIntegerProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.ReadOnlyStringProperty;
 import javafx.beans.property.ReadOnlyStringWrapper;
+import javafx.beans.property.SimpleIntegerProperty;
+import skadistats.clarity.analyzer.Analyzer;
 import skadistats.clarity.model.FieldPath;
 
 import java.util.Arrays;
@@ -20,7 +24,8 @@ public class ObservableEntityProperty implements Comparable<FieldPath> {
     private final ReadOnlyStringProperty name;
     private final ObjectBinding value;
     private final StringBinding valueAsString;
-    private long lastChangedAt;
+    private IntegerProperty lastChangedAtTick;
+    private long lastChangedAtMillis;
 
     public ObservableEntityProperty(FieldPath fp, String type, String name, Supplier<Object> valueSupplier) {
         this.fieldPath = new ReadOnlyObjectWrapper<>(fp);
@@ -33,7 +38,8 @@ public class ObservableEntityProperty implements Comparable<FieldPath> {
             }
             @Override
             protected void onInvalidating() {
-                lastChangedAt = System.currentTimeMillis();
+                lastChangedAtTick.set(Analyzer.currentTick);
+                lastChangedAtMillis = System.currentTimeMillis();
             }
         };
         this.valueAsString = createStringBinding(
@@ -49,6 +55,7 @@ public class ObservableEntityProperty implements Comparable<FieldPath> {
                 },
                 this.value
         );
+        this.lastChangedAtTick = new SimpleIntegerProperty(Analyzer.currentTick);
     }
 
     public FieldPath getFieldPath() {
@@ -91,8 +98,16 @@ public class ObservableEntityProperty implements Comparable<FieldPath> {
         return valueAsString;
     }
 
-    public long getLastChangedAt() {
-        return lastChangedAt;
+    public int getLastChangedAtTick() {
+        return lastChangedAtTick.get();
+    }
+
+    public ReadOnlyIntegerProperty lastChangedAtTickProperty() {
+        return lastChangedAtTick;
+    }
+
+    public long getLastChangedAtMillis() {
+        return lastChangedAtMillis;
     }
 
     @Override
