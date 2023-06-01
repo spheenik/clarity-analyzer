@@ -7,6 +7,8 @@ import skadistats.clarity.model.Vector;
 
 public class CSGOS2PositionBinder implements PositionBinder {
 
+    private static final Vector ZERO = new Vector(0.0f, 0.0f);
+
     public boolean hasPosition(ObservableEntity oe) {
         return oe.getDtClass().getFieldPathForName( "CBodyComponent.m_cellX")  != null;
     }
@@ -31,7 +33,7 @@ public class CSGOS2PositionBinder implements PositionBinder {
 
     @Override
     public ObservableValue<Float> getRotation(ObservableEntity oe) {
-        return EasyBind.wrap(oe.getPropertyBinding(Vector.class, "m_angEyeAngles", null))
+        return EasyBind.wrap(oe.getPropertyBinding(Vector.class, "m_angEyeAngles", ZERO))
                 .map(v -> v.getElement(1) - 90);
     }
 
