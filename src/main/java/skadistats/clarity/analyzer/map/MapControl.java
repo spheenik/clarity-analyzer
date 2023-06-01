@@ -13,6 +13,7 @@ import javafx.scene.shape.Rectangle;
 import javafx.scene.transform.Scale;
 import javafx.scene.transform.Translate;
 import skadistats.clarity.analyzer.map.binding.BindingGenerator;
+import skadistats.clarity.analyzer.map.binding.CSGOS1BindingGenerator;
 import skadistats.clarity.analyzer.map.binding.CSGOS2BindingGenerator;
 import skadistats.clarity.analyzer.map.binding.DotaS1BindingGenerator;
 import skadistats.clarity.analyzer.map.binding.DotaS2BindingGenerator;
@@ -54,6 +55,8 @@ public class MapControl extends Region {
                 return new DotaS1BindingGenerator(entityList);
             case DOTA_S2:
                 return new DotaS2BindingGenerator(entityList);
+            case CSGO_S1:
+                return new CSGOS1BindingGenerator(entityList);
             case CSGO_S2:
                 return new CSGOS2BindingGenerator(entityList);
             default:
