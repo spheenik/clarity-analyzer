@@ -187,7 +187,7 @@ public class MainView implements Initializable {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Load a replay");
         fileChooser.getExtensionFilters().addAll(
-            new FileChooser.ExtensionFilter("Dota 2 replay files", "*.dem"),
+            new FileChooser.ExtensionFilter("Replay files", "*.dem"),
             new FileChooser.ExtensionFilter("All files", "*")
         );
         File dir = new File(preferences.get("fileChooserPath", "."));
