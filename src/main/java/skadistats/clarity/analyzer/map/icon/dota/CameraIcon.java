@@ -6,8 +6,6 @@ import skadistats.clarity.analyzer.map.icon.EntityIcon;
 import skadistats.clarity.analyzer.map.position.PositionBinder;
 import skadistats.clarity.analyzer.replay.ObservableEntity;
 
-import static javafx.beans.binding.Bindings.selectFloat;
-
 public class CameraIcon extends EntityIcon<Polygon> {
 
     private static final int W = 800;
@@ -25,8 +23,8 @@ public class CameraIcon extends EntityIcon<Polygon> {
         shape.setStrokeWidth(20);
         shape.strokeProperty().bind(getPlayerColor());
 
-        shape.translateXProperty().bind(selectFloat(getMapX()).subtract(W/2));
-        shape.translateYProperty().bind(selectFloat(getMapY()).subtract(H));
+        shape.translateXProperty().bind(getMapX().subtract(W/2));
+        shape.translateYProperty().bind(getMapY().subtract(H));
     }
 
     @Override

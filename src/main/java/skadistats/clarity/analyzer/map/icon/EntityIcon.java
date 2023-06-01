@@ -5,13 +5,16 @@ import javafx.beans.binding.FloatBinding;
 import javafx.beans.binding.IntegerBinding;
 import javafx.beans.binding.LongBinding;
 import javafx.beans.binding.ObjectBinding;
-import javafx.beans.value.ObservableFloatValue;
-import javafx.beans.value.ObservableValue;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.Shape;
 import skadistats.clarity.analyzer.map.position.PositionBinder;
 import skadistats.clarity.analyzer.replay.ObservableEntity;
+
+import static javafx.beans.binding.Bindings.selectFloat;
+import static javafx.beans.binding.Bindings.selectInteger;
+import static javafx.beans.binding.Bindings.selectLong;
+
 
 public abstract class EntityIcon<T extends Shape> {
 
@@ -38,28 +41,28 @@ public abstract class EntityIcon<T extends Shape> {
 
     public abstract T getShape();
 
-    protected ObservableValue<Float> getMapX() {
-        return pb.getMapX(oe);
+    protected FloatBinding getMapX() {
+        return selectFloat(pb.getMapX(oe));
     }
 
-    protected ObservableValue<Float> getMapY() {
-        return pb.getMapY(oe);
+    protected FloatBinding getMapY() {
+        return selectFloat(pb.getMapY(oe));
     }
 
-    protected ObservableValue<Float> getRotation() {
-        return pb.getRotation(oe);
+    protected FloatBinding getRotation() {
+        return selectFloat(pb.getRotation(oe));
     }
 
     protected IntegerBinding getPlayerId() {
-        return Bindings.selectInteger(oe.getPropertyBinding(Integer.class, "m_iPlayerID", -1));
+        return selectInteger(oe.getPropertyBinding(Integer.class, "m_iPlayerID", -1));
     }
 
     protected IntegerBinding getTeamNum() {
-        return Bindings.selectInteger(oe.getPropertyBinding(Integer.class, "m_iTeamNum", 0));
+        return selectInteger(oe.getPropertyBinding(Integer.class, "m_iTeamNum", 0));
     }
 
     protected LongBinding getModelHandle() {
-        return Bindings.selectLong(oe.getPropertyBinding(Long.class, "CBodyComponent.m_hModel", 0L));
+        return selectLong(oe.getPropertyBinding(Long.class, "CBodyComponent.m_hModel", 0L));
     }
 
     protected ObjectBinding<Paint> getTeamColor() {
