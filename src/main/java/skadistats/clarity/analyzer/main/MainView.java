@@ -9,6 +9,7 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.Slider;
@@ -70,6 +71,9 @@ public class MainView implements Initializable {
     public TextField entityNameFilter;
 
     @FXML
+    public CheckBox onlyFilledSlots;
+
+    @FXML
     private MapControl mapControl;
 
     private Preferences preferences;
@@ -96,10 +100,12 @@ public class MainView implements Initializable {
                     FilteredList<ObservableEntity> fel = new FilteredList<>(src);
                     fel.predicateProperty().bind(createObjectBinding(() -> {
                                 String filter = entityNameFilter.getText();
-                                if (filter.isEmpty()) return null;
-                                return e -> e.getName().toLowerCase().contains(filter.toLowerCase());
+                            boolean onlySelected = onlyFilledSlots.isSelected();
+                            return e ->
+                                (!onlySelected || e.getDtClass() != null)
+                                && (filter.isEmpty() || e.getName().toLowerCase().contains(filter.toLowerCase()));
                             },
-                            entityNameFilter.textProperty()
+                            entityNameFilter.textProperty(), onlyFilledSlots.selectedProperty()
                     ));
                     return fel;
                 },
