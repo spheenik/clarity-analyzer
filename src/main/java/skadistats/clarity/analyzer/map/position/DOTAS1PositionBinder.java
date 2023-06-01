@@ -6,7 +6,7 @@ import javafx.beans.binding.ObjectBinding;
 import javafx.beans.property.ReadOnlyProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
-import org.fxmisc.easybind.EasyBind;
+import com.tobiasdiez.easybind.EasyBind;
 import skadistats.clarity.analyzer.replay.ObservableEntity;
 import skadistats.clarity.model.Vector;
 

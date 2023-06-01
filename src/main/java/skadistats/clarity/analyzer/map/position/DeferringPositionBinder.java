@@ -1,7 +1,7 @@
 package skadistats.clarity.analyzer.map.position;
 
 import javafx.beans.value.ObservableValue;
-import org.fxmisc.easybind.EasyBind;
+import com.tobiasdiez.easybind.EasyBind;
 import skadistats.clarity.analyzer.replay.ObservableEntity;
 import skadistats.clarity.analyzer.replay.ObservableEntityList;
 
@@ -20,7 +20,7 @@ public class DeferringPositionBinder implements PositionBinder {
     }
 
     private <T> ObservableValue<T> callOnChild(ObservableEntity parent, Function<ObservableEntity, ObservableValue<T>> fn) {
-        return EasyBind.monadic(parent.getPropertyBinding(Integer.class, handleProperty, null))
+        return EasyBind.wrap(parent.getPropertyBinding(Integer.class, handleProperty, null))
                 .map(entityList::byHandle)
                 .flatMap(fn);
     }

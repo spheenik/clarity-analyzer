@@ -1,7 +1,7 @@
 package skadistats.clarity.analyzer.map.position;
 
 import javafx.beans.value.ObservableValue;
-import org.fxmisc.easybind.EasyBind;
+import com.tobiasdiez.easybind.EasyBind;
 import skadistats.clarity.analyzer.replay.ObservableEntity;
 import skadistats.clarity.model.Vector;
 
@@ -31,7 +31,7 @@ public class CSGOS2PositionBinder implements PositionBinder {
 
     @Override
     public ObservableValue<Float> getRotation(ObservableEntity oe) {
-        return EasyBind.monadic(oe.getPropertyBinding(Vector.class, "m_angEyeAngles", null))
+        return EasyBind.wrap(oe.getPropertyBinding(Vector.class, "m_angEyeAngles", null))
                 .map(v -> v.getElement(1) - 90);
     }
 

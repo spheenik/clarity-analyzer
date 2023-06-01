@@ -1,7 +1,7 @@
 package skadistats.clarity.analyzer.map.position;
 
 import javafx.beans.value.ObservableValue;
-import org.fxmisc.easybind.EasyBind;
+import com.tobiasdiez.easybind.EasyBind;
 import skadistats.clarity.analyzer.replay.ObservableEntity;
 
 import static javafx.beans.binding.Bindings.createObjectBinding;

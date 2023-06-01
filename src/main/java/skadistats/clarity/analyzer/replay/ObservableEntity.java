@@ -1,5 +1,6 @@
 package skadistats.clarity.analyzer.replay;
 
+import com.tobiasdiez.easybind.EasyBind;
 import javafx.beans.binding.ObjectBinding;
 import javafx.beans.property.ReadOnlyIntegerProperty;
 import javafx.beans.property.ReadOnlyIntegerWrapper;
@@ -8,7 +9,6 @@ import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableListBase;
 import lombok.extern.slf4j.Slf4j;
-import org.fxmisc.easybind.EasyBind;
 import skadistats.clarity.io.s2.Field;
 import skadistats.clarity.io.s2.S2DTClass;
 import skadistats.clarity.model.DTClass;

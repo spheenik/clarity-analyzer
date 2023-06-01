@@ -10,10 +10,10 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.scene.control.Slider;
-import org.fxmisc.easybind.EasyBind;
+import com.tobiasdiez.easybind.EasyBind;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import skadistats.clarity.analyzer.Main;
+import skadistats.clarity.analyzer.Analyzer;
 import skadistats.clarity.analyzer.main.ExceptionDialog;
 import skadistats.clarity.io.Util;
 import skadistats.clarity.processor.entities.UsesEntities;
@@ -64,7 +64,7 @@ public class ReplayController {
         playing.addListener(this::playingStateChanged);
         slider.valueProperty().addListener(this::sliderValueChanged);
         tick.addListener(this::tickChanged);
-        Main.primaryStage.setOnCloseRequest(event -> haltIfRunning());
+        Analyzer.primaryStage.setOnCloseRequest(event -> haltIfRunning());
     }
 
     private void playingStateChanged(ObservableValue<? extends Boolean> v, Boolean o, Boolean n) {
