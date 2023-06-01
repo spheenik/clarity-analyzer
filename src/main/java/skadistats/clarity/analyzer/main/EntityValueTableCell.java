@@ -19,23 +19,29 @@ class EntityValueTableCell extends TableCell<ObservableEntityProperty, String> {
         @Override
         protected void interpolate(double frac) {
             Color col = Color.YELLOW.interpolate(Color.WHITE, frac);
-            getTableRow().setStyle(String.format(
-                    "-fx-control-inner-background: #%02X%02X%02X;",
-                    (int) (col.getRed() * 255),
-                    (int) (col.getGreen() * 255),
-                    (int) (col.getBlue() * 255)
-            ));
+            setBackgroundColor(col);
         }
     };
+
+    private void setBackgroundColor(Color col) {
+        getTableRow().setStyle(String.format(
+                "-fx-control-inner-background: #%02X%02X%02X;",
+                (int) (col.getRed() * 255),
+                (int) (col.getGreen() * 255),
+                (int) (col.getBlue() * 255)
+        ));
+    }
 
     @Override
     protected void updateItem(String item, boolean empty) {
         super.updateItem(item, empty);
         setText(item);
-        ObservableEntityProperty oep = (ObservableEntityProperty) getTableRow().getItem();
+        ObservableEntityProperty oep = getTableRow().getItem();
+        animation.stop();
         if (oep != null) {
-            animation.stop();
             animation.playFrom(Duration.millis(System.currentTimeMillis() - oep.getLastChangedAtMillis()));
+        } else {
+            setBackgroundColor(Color.WHITE);
         }
     }
 
