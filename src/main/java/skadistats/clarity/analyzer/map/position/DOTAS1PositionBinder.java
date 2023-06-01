@@ -1,12 +1,7 @@
 package skadistats.clarity.analyzer.map.position;
 
-import javafx.beans.InvalidationListener;
-import javafx.beans.binding.Bindings;
-import javafx.beans.binding.ObjectBinding;
-import javafx.beans.property.ReadOnlyProperty;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import com.tobiasdiez.easybind.EasyBind;
+import javafx.beans.value.ObservableValue;
 import skadistats.clarity.analyzer.replay.ObservableEntity;
 import skadistats.clarity.model.Vector;
 
