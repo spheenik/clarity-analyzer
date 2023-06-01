@@ -7,6 +7,7 @@ import javafx.beans.property.ReadOnlyIntegerWrapper;
 import javafx.beans.property.ReadOnlyStringProperty;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.beans.value.ObservableValue;
+import javafx.beans.value.ObservableValueBase;
 import javafx.collections.ObservableListBase;
 import lombok.extern.slf4j.Slf4j;
 import skadistats.clarity.io.s2.Field;
@@ -180,6 +181,7 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
         }
     }
 
+
     public ObservableEntityPropertyBinding getPropertyBinding(FieldPath fp) {
         if (propertyBindings == null) {
             propertyBindings = new ArrayList<>();
@@ -192,19 +194,20 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
     }
 
     public <T> ObservableValue<T> getPropertyBinding(Class<T> propertyClass, String name, T defaultValue) {
-        ObjectBinding<T> defaultBinding = new ObjectBinding<T>() {
-            @Override
-            protected T computeValue() {
-                return defaultValue;
-            }
-        };
         FieldPath fp = getDtClass().getFieldPathForName(name);
-        if (fp == null) return defaultBinding;
+        if (fp == null) {
+            return new ObservableValueBase<>() {
+                @Override
+                public T getValue() {
+                    return defaultValue;
+                }
+            };
+        }
         ObservableEntityPropertyBinding propertyBinding = getPropertyBinding(fp);
-        return (ObjectBinding<T>) EasyBind.select(propertyBinding)
+        return EasyBind.select(propertyBinding)
                 .selectObject(ObservableEntityProperty::valueProperty)
                 .map(propertyClass::cast)
-                .orElse(defaultBinding);
+                .orElse(defaultValue);
     }
 
     @Override

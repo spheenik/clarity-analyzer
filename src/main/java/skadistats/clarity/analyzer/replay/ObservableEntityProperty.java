@@ -22,16 +22,16 @@ public class ObservableEntityProperty implements Comparable<FieldPath> {
     private final ReadOnlyObjectProperty<FieldPath> fieldPath;
     private final ReadOnlyStringWrapper type;
     private final ReadOnlyStringProperty name;
-    private final ObjectBinding value;
+    private final ObjectBinding<Object> value;
     private final StringBinding valueAsString;
-    private IntegerProperty lastChangedAtTick;
+    private final IntegerProperty lastChangedAtTick;
     private long lastChangedAtMillis;
 
     public ObservableEntityProperty(FieldPath fp, String type, String name, Supplier<Object> valueSupplier) {
         this.fieldPath = new ReadOnlyObjectWrapper<>(fp);
         this.type = new ReadOnlyStringWrapper(type);
         this.name = new ReadOnlyStringWrapper(name);
-        this.value = new ObjectBinding() {
+        this.value = new ObjectBinding<>() {
             @Override
             protected Object computeValue() {
                 return valueSupplier.get();
@@ -86,7 +86,7 @@ public class ObservableEntityProperty implements Comparable<FieldPath> {
         return value.get();
     }
 
-    public ObjectBinding valueProperty() {
+    public ObjectBinding<Object> valueProperty() {
         return value;
     }
 
