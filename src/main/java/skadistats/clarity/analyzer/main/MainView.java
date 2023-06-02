@@ -31,6 +31,7 @@ import skadistats.clarity.analyzer.replay.ObservableEntity;
 import skadistats.clarity.analyzer.replay.ObservableEntityList;
 import skadistats.clarity.analyzer.replay.ObservableEntityProperty;
 import skadistats.clarity.analyzer.replay.ReplayController;
+import skadistats.clarity.analyzer.util.TimeToTick;
 
 import java.io.File;
 import java.util.function.Consumer;
@@ -124,12 +125,13 @@ public class MainView implements Initializable {
                 if (src == null) return null;
                 FilteredList<ObservableEntityProperty> filteredList = new FilteredList<>(src);
                 filteredList.predicateProperty().bind(createObjectBinding(() -> {
+                        System.out.println(src.getRecentChangesHash());
                         String filter = propertyNameFilter.getText();
                         return oe ->
-                            (!onlyRecentlyUpdated.isSelected() || Analyzer.currentTick - oe.getLastChangedAtTick() < 200)
+                            (!onlyRecentlyUpdated.isSelected() || TimeToTick.millisBetweenTicks(Analyzer.currentTick, oe.getLastChangedAtTick()) <= 10000.0f)
                                 && (filter.isEmpty() || oe.getName().toLowerCase().contains(filter.toLowerCase()));
                     },
-                    propertyNameFilter.textProperty(), onlyRecentlyUpdated.selectedProperty()
+                    propertyNameFilter.textProperty(), onlyRecentlyUpdated.selectedProperty(), src.recentChangesHashProperty()
                 ));
                 return filteredList;
             },

@@ -24,7 +24,7 @@ public class ObservableEntityProperty implements Comparable<FieldPath> {
     private final ReadOnlyStringProperty name;
     private final ObjectBinding<Object> value;
     private final StringBinding valueAsString;
-    private final IntegerProperty lastChangedAtTick;
+    private int lastChangedAtTick;
     private long lastChangedAtMillis;
 
     public ObservableEntityProperty(FieldPath fp, String type, String name, Supplier<Object> valueSupplier) {
@@ -38,7 +38,7 @@ public class ObservableEntityProperty implements Comparable<FieldPath> {
             }
             @Override
             protected void onInvalidating() {
-                lastChangedAtTick.set(Analyzer.currentTick);
+                lastChangedAtTick = Analyzer.currentTick;
                 lastChangedAtMillis = System.currentTimeMillis();
             }
         };
@@ -55,7 +55,7 @@ public class ObservableEntityProperty implements Comparable<FieldPath> {
                 },
                 this.value
         );
-        this.lastChangedAtTick = new SimpleIntegerProperty(Analyzer.currentTick);
+        this.lastChangedAtTick = Analyzer.currentTick;
     }
 
     public FieldPath getFieldPath() {
@@ -99,10 +99,6 @@ public class ObservableEntityProperty implements Comparable<FieldPath> {
     }
 
     public int getLastChangedAtTick() {
-        return lastChangedAtTick.get();
-    }
-
-    public ReadOnlyIntegerProperty lastChangedAtTickProperty() {
         return lastChangedAtTick;
     }
 

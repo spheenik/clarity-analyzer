@@ -1,15 +1,23 @@
 package skadistats.clarity.analyzer.replay;
 
 import com.tobiasdiez.easybind.EasyBind;
+import it.unimi.dsi.fastutil.ints.Int2ObjectAVLTreeMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectRBTreeMap;
+import it.unimi.dsi.fastutil.objects.ObjectIterator;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 import javafx.beans.binding.ObjectBinding;
 import javafx.beans.property.ReadOnlyIntegerProperty;
 import javafx.beans.property.ReadOnlyIntegerWrapper;
 import javafx.beans.property.ReadOnlyStringProperty;
 import javafx.beans.property.ReadOnlyStringWrapper;
+import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.beans.value.ObservableValueBase;
 import javafx.collections.ObservableListBase;
 import lombok.extern.slf4j.Slf4j;
+import skadistats.clarity.analyzer.util.TimeToTick;
 import skadistats.clarity.io.s2.Field;
 import skadistats.clarity.io.s2.S2DTClass;
 import skadistats.clarity.model.DTClass;
@@ -21,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 @Slf4j
 public class ObservableEntity extends ObservableListBase<ObservableEntityProperty> {
@@ -31,6 +40,8 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
     private final ReadOnlyStringProperty name;
     private final List<ObservableEntityProperty> properties;
     private List<ObservableEntityPropertyBinding> propertyBindings;
+    private final ObjectSet<FieldPath> recentChanges;
+    private final SimpleIntegerProperty recentChangesHash;
 
     private EntityState state;
 
@@ -50,6 +61,8 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
             this.name = new ReadOnlyStringWrapper("");
             this.properties = null;
         }
+        this.recentChanges = new ObjectOpenHashSet<>();
+        this.recentChangesHash = new SimpleIntegerProperty();
     }
 
     private List<ObservableEntityProperty> createProperties(EntityState state) {
@@ -77,7 +90,7 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
         return property;
     }
 
-    void performUpdate(FieldPath[] fieldPaths, EntityState state) {
+    void performUpdate(int tick, FieldPath[] fieldPaths, EntityState state) {
         this.state = state;
         for (FieldPath fp : fieldPaths) {
             int idx = Collections.binarySearch(properties, fp);
@@ -91,6 +104,23 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
             }
             ObservableEntityProperty property = properties.get(idx);
             property.valueProperty().invalidate();
+            recentChanges.add(fp);
+        }
+    }
+
+    void updatesFinished(int tick) {
+        ObjectIterator<FieldPath> changeIterator = recentChanges.iterator();
+        while (changeIterator.hasNext()) {
+            FieldPath fp = changeIterator.next();
+            int idx = Collections.binarySearch(properties, fp);
+            if (idx < 0 || TimeToTick.millisBetweenTicks(tick, properties.get(idx).getLastChangedAtTick()) > 10000.0f) {
+                changeIterator.remove();
+            }
+        }
+        int oldHash = recentChangesHash.get();
+        int newHash = recentChanges.hashCode();
+        if (oldHash != newHash) {
+            recentChangesHash.set(newHash);
         }
     }
 
@@ -106,6 +136,9 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
                 List<ObservableEntityProperty> subList = properties.subList(idx, idx + fieldPaths.size());
                 List<ObservableEntityProperty> removed = new ArrayList<>(subList);
                 subList.clear();
+                for (ObservableEntityProperty property : removed) {
+                    recentChanges.remove(property.getFieldPath());
+                }
                 nextRemove(idx, removed);
             }
             @Override
@@ -115,6 +148,7 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
                 List<ObservableEntityProperty> added = new ArrayList<>(size);
                 for (FieldPath fieldPath : fieldPaths) {
                     added.add(createProperty(fieldPath));
+                    recentChanges.add(fieldPath);
                 }
                 properties.addAll(idx, added);
                 nextAdd(idx, idx + size);
@@ -162,6 +196,14 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
 
     public ReadOnlyStringProperty nameProperty() {
         return name;
+    }
+
+    public int getRecentChangesHash() {
+        return recentChangesHash.get();
+    }
+
+    public ReadOnlyIntegerProperty recentChangesHashProperty() {
+        return recentChangesHash;
     }
 
     public class ObservableEntityPropertyBinding extends ObjectBinding<ObservableEntityProperty> implements Comparable<FieldPath> {
