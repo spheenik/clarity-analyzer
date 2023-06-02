@@ -40,4 +40,4 @@ You need to build first. Then, from the base project folder:
 
 # License
 
-See LICENSE in the project root.
+See ![LICENSE](/LICENSE) in the project root.
