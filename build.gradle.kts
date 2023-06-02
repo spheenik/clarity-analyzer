@@ -2,6 +2,7 @@ plugins {
     id("application")
     id("org.openjfx.javafxplugin") version "0.0.14"
     id("io.freefair.lombok") version "8.0.1"
+    id("com.needhamsoftware.unojar") version "1.1.0"
 }
 
 group = "com.skadistats"
@@ -33,4 +34,9 @@ dependencies {
 
 application {
     mainClass.set("skadistats.clarity.analyzer.AnalyzerLauncher")
+}
+
+unojar {
+    archiveVersion.set("")
+    archiveClassifier.set("")
 }
