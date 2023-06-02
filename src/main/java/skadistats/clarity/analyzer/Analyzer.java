@@ -11,8 +11,6 @@ import skadistats.clarity.analyzer.util.FXResources;
 public class Analyzer extends Application {
 
     public static Stage primaryStage;
-    public static int currentTick = -1;
-
     @Override
     public void start(Stage primaryStage) throws Exception{
         this.primaryStage = primaryStage;

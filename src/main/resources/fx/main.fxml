@@ -117,7 +117,7 @@
                        </rowConstraints>
                        <children>
                            <TextField fx:id="propertyNameFilter" minHeight="-Infinity" promptText="Filter by property name..." />
-                           <CheckBox fx:id="onlyRecentlyUpdated" mnemonicParsing="false" text="show only recently updated (past 10 seconds)" GridPane.rowIndex="1">
+                           <CheckBox fx:id="onlyRecentlyUpdated" mnemonicParsing="false" text="show only recently updated (past 5 seconds)" GridPane.rowIndex="1">
                            <GridPane.margin>
                               <Insets left="4.0" />
                            </GridPane.margin></CheckBox>

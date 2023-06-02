@@ -1,9 +1,6 @@
 package skadistats.clarity.analyzer.replay;
 
 import com.tobiasdiez.easybind.EasyBind;
-import it.unimi.dsi.fastutil.ints.Int2ObjectAVLTreeMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectRBTreeMap;
 import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
@@ -17,7 +14,7 @@ import javafx.beans.value.ObservableValue;
 import javafx.beans.value.ObservableValueBase;
 import javafx.collections.ObservableListBase;
 import lombok.extern.slf4j.Slf4j;
-import skadistats.clarity.analyzer.util.TimeToTick;
+import skadistats.clarity.analyzer.util.TickHelper;
 import skadistats.clarity.io.s2.Field;
 import skadistats.clarity.io.s2.S2DTClass;
 import skadistats.clarity.model.DTClass;
@@ -29,7 +26,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 
 @Slf4j
 public class ObservableEntity extends ObservableListBase<ObservableEntityProperty> {
@@ -62,7 +58,7 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
             this.properties = null;
         }
         this.recentChanges = new ObjectOpenHashSet<>();
-        this.recentChangesHash = new SimpleIntegerProperty();
+        this.recentChangesHash = new SimpleIntegerProperty(0);
     }
 
     private List<ObservableEntityProperty> createProperties(EntityState state) {
@@ -90,6 +86,14 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
         return property;
     }
 
+    public void performCreate(int tick) {
+        if (properties == null) return;
+        for (ObservableEntityProperty property : properties) {
+            recentChanges.add(property.getFieldPath());
+        }
+        updateRecentChangesHash();
+    }
+
     void performUpdate(int tick, FieldPath[] fieldPaths, EntityState state) {
         this.state = state;
         for (FieldPath fp : fieldPaths) {
@@ -113,12 +117,16 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
         while (changeIterator.hasNext()) {
             FieldPath fp = changeIterator.next();
             int idx = Collections.binarySearch(properties, fp);
-            if (idx < 0 || TimeToTick.millisBetweenTicks(tick, properties.get(idx).getLastChangedAtTick()) > 10000.0f) {
+            if (idx < 0 || !TickHelper.isRecent(properties.get(idx).getLastChangedAtTick())) {
                 changeIterator.remove();
             }
         }
+        updateRecentChangesHash();
+    }
+
+    private void updateRecentChangesHash() {
         int oldHash = recentChangesHash.get();
-        int newHash = recentChanges.hashCode();
+        int newHash = recentChanges.isEmpty() ? 0 : recentChanges.hashCode();
         if (oldHash != newHash) {
             recentChangesHash.set(newHash);
         }

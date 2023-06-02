@@ -2,14 +2,11 @@ package skadistats.clarity.analyzer.replay;
 
 import javafx.beans.binding.ObjectBinding;
 import javafx.beans.binding.StringBinding;
-import javafx.beans.property.IntegerProperty;
-import javafx.beans.property.ReadOnlyIntegerProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.ReadOnlyStringProperty;
 import javafx.beans.property.ReadOnlyStringWrapper;
-import javafx.beans.property.SimpleIntegerProperty;
-import skadistats.clarity.analyzer.Analyzer;
+import skadistats.clarity.analyzer.util.TickHelper;
 import skadistats.clarity.model.FieldPath;
 
 import java.util.Arrays;
@@ -38,7 +35,7 @@ public class ObservableEntityProperty implements Comparable<FieldPath> {
             }
             @Override
             protected void onInvalidating() {
-                lastChangedAtTick = Analyzer.currentTick;
+                lastChangedAtTick = TickHelper.currentTick;
                 lastChangedAtMillis = System.currentTimeMillis();
             }
         };
@@ -55,7 +52,7 @@ public class ObservableEntityProperty implements Comparable<FieldPath> {
                 },
                 this.value
         );
-        this.lastChangedAtTick = Analyzer.currentTick;
+        this.lastChangedAtTick = TickHelper.currentTick;
     }
 
     public FieldPath getFieldPath() {

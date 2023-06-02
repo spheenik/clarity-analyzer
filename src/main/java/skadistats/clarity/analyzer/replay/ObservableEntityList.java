@@ -1,7 +1,5 @@
 package skadistats.clarity.analyzer.replay;
 
-import javafx.beans.binding.Bindings;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableListBase;
 import skadistats.clarity.analyzer.util.PendingActionList;
 import skadistats.clarity.event.Insert;
@@ -61,8 +59,9 @@ public class ObservableEntityList extends ObservableListBase<ObservableEntity> {
         return null;
     }
 
-    private void performUpdate(int tick, int idx, ObservableEntity value) {
+    private void replaceEntity(int tick, int idx, ObservableEntity value) {
         entities[idx] = value;
+        entities[idx].performCreate(ctx.getTick());
         nextUpdate(idx);
     }
 
@@ -72,7 +71,7 @@ public class ObservableEntityList extends ObservableListBase<ObservableEntity> {
         DTClass dtClass = entity.getDtClass();
         int serial = entity.getSerial();
         EntityState state = entity.getState().copy();
-        pendingActions.add(() -> performUpdate(ctx.getTick(), i, new ObservableEntity(i, serial, dtClass, state)));
+        pendingActions.add(() -> replaceEntity(ctx.getTick(), i, new ObservableEntity(i, serial, dtClass, state)));
     }
 
     @OnEntityUpdated
@@ -94,7 +93,7 @@ public class ObservableEntityList extends ObservableListBase<ObservableEntity> {
     @OnEntityDeleted
     protected void onDelete(Entity entity) {
         int i = entity.getIndex();
-        pendingActions.add(() -> performUpdate(ctx.getTick(), i, new ObservableEntity(i)));
+        pendingActions.add(() -> replaceEntity(ctx.getTick(), i, new ObservableEntity(i)));
     }
 
     @OnEntityUpdatesCompleted

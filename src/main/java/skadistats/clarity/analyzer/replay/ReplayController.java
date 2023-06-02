@@ -1,5 +1,6 @@
 package skadistats.clarity.analyzer.replay;
 
+import com.tobiasdiez.easybind.EasyBind;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.IntegerBinding;
@@ -10,12 +11,11 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.scene.control.Slider;
-import com.tobiasdiez.easybind.EasyBind;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import skadistats.clarity.analyzer.Analyzer;
 import skadistats.clarity.analyzer.main.ExceptionDialog;
-import skadistats.clarity.analyzer.util.TimeToTick;
+import skadistats.clarity.analyzer.util.TickHelper;
 import skadistats.clarity.io.Util;
 import skadistats.clarity.processor.entities.UsesEntities;
 import skadistats.clarity.source.LiveSource;
@@ -116,7 +116,7 @@ public class ReplayController {
         try {
             haltIfRunning();
             PropertySupportRunner r = new PropertySupportRunner(new LiveSource(f.getAbsoluteFile().toString(), 30, TimeUnit.SECONDS));
-            TimeToTick.engineType = r.getEngineType();
+            TickHelper.engineType = r.getEngineType();
             ObservableEntityList observableEntities = new ObservableEntityList(r.getEngineType());
             runner.setValue(r);
             r.runWith(this, observableEntities);
