@@ -20,7 +20,10 @@ public class Analyzer extends Application {
 
         Scene mainScene = new Scene(parent);
         primaryStage.setTitle("Clarity Analyzer");
-        primaryStage.getIcons().add(new Image(FXResources.getResourceAsStream("images/dota_2_icon.png")));
+
+        Image icon = new Image(FXResources.getResourceAsStream("images/clarity_icon.png"));
+        primaryStage.getIcons().add(icon);
+
         primaryStage.setScene(mainScene);
         primaryStage.show();
     }
