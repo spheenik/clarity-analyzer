@@ -44,21 +44,16 @@
             <Insets />
          </opaqueInsets>
          <children>
-            <Button fx:id="buttonPlay" alignment="TOP_LEFT" mnemonicParsing="false" onAction="#clickPlay" text="►">
+            <Button fx:id="buttonPlay" alignment="TOP_LEFT" mnemonicParsing="false" onAction="#clickPlay" text="⏵">
                <font>
-                  <Font name="Arial" size="10.0" />
+                  <Font name="Arial" size="12.0" />
                </font></Button>
-            <Button fx:id="buttonPause" alignment="TOP_LEFT" layoutX="15.0" layoutY="15.0" mnemonicParsing="false" onAction="#clickPause" text="▐▐">
-               <font>
-                  <Font name="Arial" size="10.0" />
-               </font>
-            </Button>
             <Slider fx:id="slider" HBox.hgrow="ALWAYS">
                <HBox.margin>
                   <Insets top="3.0" />
                </HBox.margin>
             </Slider>
-            <HBox alignment="TOP_RIGHT">
+            <HBox alignment="CENTER_RIGHT">
                <children>
                   <Label fx:id="labelTick" alignment="CENTER" text="-" />
                   <Label text="/" />

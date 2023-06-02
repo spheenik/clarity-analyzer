@@ -1,5 +1,6 @@
 package skadistats.clarity.analyzer.main;
 
+import com.tobiasdiez.easybind.EasyBind;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.binding.ObjectBinding;
 import javafx.beans.property.ObjectProperty;
@@ -51,9 +52,6 @@ public class MainView implements Initializable {
     public Button buttonPlay;
 
     @FXML
-    public Button buttonPause;
-
-    @FXML
     public Slider slider;
 
     @FXML
@@ -94,8 +92,8 @@ public class MainView implements Initializable {
         replayController = new ReplayController(slider);
 
         BooleanBinding runnerIsNull = createBooleanBinding(() -> replayController.getRunner() == null, replayController.runnerProperty());
-        buttonPlay.disableProperty().bind(runnerIsNull.or(replayController.playingProperty()));
-        buttonPause.disableProperty().bind(runnerIsNull.or(replayController.playingProperty().not()));
+        buttonPlay.disableProperty().bind(runnerIsNull);
+        buttonPlay.textProperty().bind(EasyBind.map(replayController.playingProperty(), playing -> playing ? "⏸" : "⏵"));
         slider.disableProperty().bind(runnerIsNull);
 
         labelTick.textProperty().bind(replayController.tickProperty().asString());
@@ -206,11 +204,7 @@ public class MainView implements Initializable {
     }
 
     public void clickPlay(ActionEvent actionEvent) {
-        replayController.setPlaying(true);
-    }
-
-    public void clickPause(ActionEvent actionEvent) {
-        replayController.setPlaying(false);
+        replayController.setPlaying(!replayController.isPlaying());
     }
 
     private void handleDetailTableKeyPressed(KeyEvent e) {

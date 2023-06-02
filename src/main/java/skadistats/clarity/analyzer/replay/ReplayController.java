@@ -163,6 +163,10 @@ public class ReplayController {
         this.playing.set(playing);
     }
 
+    public boolean isPlaying() {
+        return playing.get();
+    }
+
     public ObservableEntityList getEntityList() {
         return entityList.get();
     }
