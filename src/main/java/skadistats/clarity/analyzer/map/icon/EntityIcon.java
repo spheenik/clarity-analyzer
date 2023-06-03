@@ -66,9 +66,9 @@ public abstract class EntityIcon<T extends Shape> {
     }
 
     protected ObjectBinding<Paint> getTeamColor() {
-        IntegerBinding teamNum = getTeamNum();
+        var teamNum = getTeamNum();
         return Bindings.createObjectBinding(() -> {
-            int n = teamNum.get();
+            var n = teamNum.get();
             switch (n) {
                 case 2:
                     return Color.GREEN;
@@ -81,9 +81,9 @@ public abstract class EntityIcon<T extends Shape> {
     }
 
     protected ObjectBinding<Paint> getPlayerColor() {
-        IntegerBinding playerId = getPlayerId();
+        var playerId = getPlayerId();
         return Bindings.createObjectBinding(() -> {
-            int n = playerId.get();
+            var n = playerId.get();
             if (n < 0 || n > 9) {
                 return Color.WHITE;
             } else {

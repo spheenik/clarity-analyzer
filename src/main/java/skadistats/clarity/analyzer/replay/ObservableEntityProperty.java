@@ -41,7 +41,7 @@ public class ObservableEntityProperty implements Comparable<FieldPath> {
         };
         this.valueAsString = createStringBinding(
                 () -> {
-                    Object v = value.get();
+                    var v = value.get();
                     if (v == null) {
                         return "<NULL>";
                     } else if (v instanceof Object[]) {

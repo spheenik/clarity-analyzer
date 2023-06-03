@@ -20,7 +20,7 @@ public class DotaS2BindingGenerator implements BindingGenerator {
 
     @Override
     public EntityIcon<?> createEntityIcon(ObservableEntity oe) {
-        String name = oe.getDtClass().getDtName();
+        var name = oe.getDtClass().getDtName();
         if (name.equals("CDOTAPlayer")) {
             return new CameraIcon(PB_STANDARD, oe);
         } else if (name.equals("CDOTA_BaseNPC_Barracks")) {

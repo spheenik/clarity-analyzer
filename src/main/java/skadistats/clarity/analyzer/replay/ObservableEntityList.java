@@ -26,7 +26,7 @@ public class ObservableEntityList extends ObservableListBase<ObservableEntity> {
     public ObservableEntityList(EngineType engineType) {
         this.engineType = engineType;
         entities = new ObservableEntity[1 << engineType.getIndexBits()];
-        for (int i = 0; i < entities.length; i++) {
+        for (var i = 0; i < entities.length; i++) {
             entities[i] = new ObservableEntity(i);
         }
     }
@@ -47,9 +47,9 @@ public class ObservableEntityList extends ObservableListBase<ObservableEntity> {
 
     public ObservableEntity byHandle(Integer handle) {
         if (handle != null) {
-            int idx = engineType.indexForHandle(handle);
-            int serial = engineType.serialForHandle(handle);
-            ObservableEntity entityAtIdx = get(idx);
+            var idx = engineType.indexForHandle(handle);
+            var serial = engineType.serialForHandle(handle);
+            var entityAtIdx = get(idx);
             if (entityAtIdx != null) {
                 if (entityAtIdx.getSerial() == serial) {
                     return entityAtIdx;
@@ -67,39 +67,39 @@ public class ObservableEntityList extends ObservableListBase<ObservableEntity> {
 
     @OnEntityCreated
     protected void onCreate(Entity entity) {
-        int i = entity.getIndex();
-        DTClass dtClass = entity.getDtClass();
-        int serial = entity.getSerial();
-        EntityState state = entity.getState().copy();
+        var i = entity.getIndex();
+        var dtClass = entity.getDtClass();
+        var serial = entity.getSerial();
+        var state = entity.getState().copy();
         pendingActions.add(() -> replaceEntity(ctx.getTick(), i, new ObservableEntity(i, serial, dtClass, state)));
     }
 
     @OnEntityUpdated
     protected void onUpdate(Entity entity, FieldPath[] fieldPaths, int num) {
-        int i = entity.getIndex();
-        FieldPath[] fieldPathsCopy = new FieldPath[num];
+        var i = entity.getIndex();
+        var fieldPathsCopy = new FieldPath[num];
         System.arraycopy(fieldPaths, 0, fieldPathsCopy, 0, num);
-        EntityState state = entity.getState().copy();
+        var state = entity.getState().copy();
         pendingActions.add(() -> entities[i].performUpdate(ctx.getTick(), fieldPathsCopy, state));
     }
 
     @OnEntityPropertyCountChanged
     protected void onPropertyCountChange(Entity entity) {
-        int i = entity.getIndex();
-        EntityState state = entity.getState().copy();
+        var i = entity.getIndex();
+        var state = entity.getState().copy();
         pendingActions.add(() -> entities[i].performCountChanged(state));
     }
 
     @OnEntityDeleted
     protected void onDelete(Entity entity) {
-        int i = entity.getIndex();
+        var i = entity.getIndex();
         pendingActions.add(() -> replaceEntity(ctx.getTick(), i, new ObservableEntity(i)));
     }
 
     @OnEntityUpdatesCompleted
     protected void onUpdatesCompleted() {
         pendingActions.add(() -> {
-            for (int i = 0; i < entities.length; i++) {
+            for (var i = 0; i < entities.length; i++) {
                 if (entities[i].getDtClass() != null) {
                     entities[i].updatesFinished(ctx.getTick());
                 }

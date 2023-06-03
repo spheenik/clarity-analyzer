@@ -63,21 +63,21 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
 
     private List<ObservableEntityProperty> createProperties(EntityState state) {
         List<ObservableEntityProperty> properties = new ArrayList<>();
-        Iterator<FieldPath> iter = state.fieldPathIterator();
+        var iter = state.fieldPathIterator();
         while (iter.hasNext()) {
-            FieldPath fp = iter.next();
-            ObservableEntityProperty property = createProperty(fp);
+            var fp = iter.next();
+            var property = createProperty(fp);
             properties.add(property);
         }
         return properties;
     }
 
     private ObservableEntityProperty createProperty(FieldPath fp) {
-        String type = dtClass.evaluate(
+        var type = dtClass.evaluate(
                 s1 -> s1.getReceiveProps()[fp.s1().idx()].getSendProp().getType().toString(),
                 s2 -> s2.getTypeForFieldPath(fp.s2()).toString()
         );
-        ObservableEntityProperty property = new ObservableEntityProperty(
+        var property = new ObservableEntityProperty(
                 fp,
                 type,
                 dtClass.getNameForFieldPath(fp),
@@ -88,7 +88,7 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
 
     public void performCreate(int tick) {
         if (properties == null) return;
-        for (ObservableEntityProperty property : properties) {
+        for (var property : properties) {
             recentChanges.add(property.getFieldPath());
         }
         updateRecentChangesHash();
@@ -96,27 +96,27 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
 
     void performUpdate(int tick, FieldPath[] fieldPaths, EntityState state) {
         this.state = state;
-        for (FieldPath fp : fieldPaths) {
-            int idx = Collections.binarySearch(properties, fp);
+        for (var fp : fieldPaths) {
+            var idx = Collections.binarySearch(properties, fp);
             if (idx < 0) {
                 // we can assume the field path to not be found only for Source 2
-                Field field = ((S2DTClass) dtClass).getFieldForFieldPath(fp.s2());
+                var field = ((S2DTClass) dtClass).getFieldForFieldPath(fp.s2());
                 if (!field.isHiddenFieldPath()) {
                     log.warn("property at fieldpath {} for entity {} ({}) not found for update", fp, getName(), getIndex());
                 }
                 continue;
             }
-            ObservableEntityProperty property = properties.get(idx);
+            var property = properties.get(idx);
             property.valueProperty().invalidate();
             recentChanges.add(fp);
         }
     }
 
     void updatesFinished(int tick) {
-        ObjectIterator<FieldPath> changeIterator = recentChanges.iterator();
+        var changeIterator = recentChanges.iterator();
         while (changeIterator.hasNext()) {
-            FieldPath fp = changeIterator.next();
-            int idx = Collections.binarySearch(properties, fp);
+            var fp = changeIterator.next();
+            var idx = Collections.binarySearch(properties, fp);
             if (idx < 0 || !TickHelper.isRecent(properties.get(idx).getLastChangedAtTick())) {
                 changeIterator.remove();
             }
@@ -125,36 +125,36 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
     }
 
     private void updateRecentChangesHash() {
-        int oldHash = recentChangesHash.get();
-        int newHash = recentChanges.isEmpty() ? 0 : recentChanges.hashCode();
+        var oldHash = recentChangesHash.get();
+        var newHash = recentChanges.isEmpty() ? 0 : recentChanges.hashCode();
         if (oldHash != newHash) {
             recentChangesHash.set(newHash);
         }
     }
 
     public void performCountChanged(EntityState state) {
-        EntityState oldState = this.state;
+        var oldState = this.state;
         this.state = state;
 
         beginChange();
         new StateDifferenceEvaluator(oldState, state) {
             @Override
             protected void onPropertiesDeleted(List<FieldPath> fieldPaths) {
-                int idx = Collections.binarySearch(properties, fieldPaths.get(0));
-                List<ObservableEntityProperty> subList = properties.subList(idx, idx + fieldPaths.size());
+                var idx = Collections.binarySearch(properties, fieldPaths.get(0));
+                var subList = properties.subList(idx, idx + fieldPaths.size());
                 List<ObservableEntityProperty> removed = new ArrayList<>(subList);
                 subList.clear();
-                for (ObservableEntityProperty property : removed) {
+                for (var property : removed) {
                     recentChanges.remove(property.getFieldPath());
                 }
                 nextRemove(idx, removed);
             }
             @Override
             protected void onPropertiesAdded(List<FieldPath> fieldPaths) {
-                int idx = -Collections.binarySearch(properties, fieldPaths.get(0)) - 1;
-                int size = fieldPaths.size();
+                var idx = -Collections.binarySearch(properties, fieldPaths.get(0)) - 1;
+                var size = fieldPaths.size();
                 List<ObservableEntityProperty> added = new ArrayList<>(size);
-                for (FieldPath fieldPath : fieldPaths) {
+                for (var fieldPath : fieldPaths) {
                     added.add(createProperty(fieldPath));
                     recentChanges.add(fieldPath);
                 }
@@ -221,7 +221,7 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
         }
         @Override
         protected ObservableEntityProperty computeValue() {
-            int idx = Collections.binarySearch(properties, fp);
+            var idx = Collections.binarySearch(properties, fp);
             if (idx < 0) return null;
             return properties.get(idx);
         }
@@ -236,15 +236,15 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
         if (propertyBindings == null) {
             propertyBindings = new ArrayList<>();
         }
-        int idx = Collections.binarySearch(propertyBindings, fp);
+        var idx = Collections.binarySearch(propertyBindings, fp);
         if (idx >= 0) return propertyBindings.get(idx);
-        ObservableEntityPropertyBinding binding = new ObservableEntityPropertyBinding(fp);
+        var binding = new ObservableEntityPropertyBinding(fp);
         propertyBindings.add(-idx - 1, binding);
         return binding;
     }
 
     public <T> ObservableValue<T> getPropertyBinding(Class<T> propertyClass, String name, T defaultValue) {
-        FieldPath fp = getDtClass().getFieldPathForName(name);
+        var fp = getDtClass().getFieldPathForName(name);
         if (fp == null) {
             return new ObservableValueBase<>() {
                 @Override
@@ -253,7 +253,7 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
                 }
             };
         }
-        ObservableEntityPropertyBinding propertyBinding = getPropertyBinding(fp);
+        var propertyBinding = getPropertyBinding(fp);
         return EasyBind.select(propertyBinding)
                 .selectObject(ObservableEntityProperty::valueProperty)
                 .map(propertyClass::cast)

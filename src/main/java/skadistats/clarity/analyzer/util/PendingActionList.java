@@ -43,7 +43,7 @@ public class PendingActionList {
     public void schedule(Runnable before, Runnable after) {
         withLock(() -> {
             if (pendingActions == null) return;
-            List<Runnable> actionsToExecute = pendingActions;
+            var actionsToExecute = pendingActions;
             pendingActions = null;
             Platform.runLater(() -> executePendingActions(actionsToExecute, before, after));
         });

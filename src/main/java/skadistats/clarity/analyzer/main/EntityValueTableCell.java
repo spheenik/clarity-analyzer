@@ -18,7 +18,7 @@ class EntityValueTableCell extends TableCell<ObservableEntityProperty, String> {
 
         @Override
         protected void interpolate(double frac) {
-            Color col = Color.YELLOW.interpolate(Color.WHITE, frac);
+            var col = Color.YELLOW.interpolate(Color.WHITE, frac);
             setBackgroundColor(col);
         }
     };
@@ -36,7 +36,7 @@ class EntityValueTableCell extends TableCell<ObservableEntityProperty, String> {
     protected void updateItem(String item, boolean empty) {
         super.updateItem(item, empty);
         setText(item);
-        ObservableEntityProperty oep = getTableRow().getItem();
+        var oep = getTableRow().getItem();
         animation.stop();
         if (oep != null) {
             animation.playFrom(Duration.millis(System.currentTimeMillis() - oep.getLastChangedAtMillis()));

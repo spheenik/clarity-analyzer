@@ -15,13 +15,13 @@ public class Analyzer extends Application {
     public void start(Stage primaryStage) throws Exception{
         this.primaryStage = primaryStage;
 
-        FXMLLoader fxmlLoader = new FXMLLoader(FXResources.getResource("main.fxml"));
+        var fxmlLoader = new FXMLLoader(FXResources.getResource("main.fxml"));
         Parent parent = fxmlLoader.load();
 
-        Scene mainScene = new Scene(parent);
+        var mainScene = new Scene(parent);
         primaryStage.setTitle("Clarity Analyzer");
 
-        Image icon = new Image(FXResources.getResourceAsStream("images/clarity_icon.png"));
+        var icon = new Image(FXResources.getResourceAsStream("images/clarity_icon.png"));
         primaryStage.getIcons().add(icon);
 
         primaryStage.setScene(mainScene);

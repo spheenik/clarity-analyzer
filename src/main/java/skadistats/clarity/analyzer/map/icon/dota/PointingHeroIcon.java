@@ -25,7 +25,7 @@ public class PointingHeroIcon extends EntityIcon<Polygon> {
 
         shape.fillProperty().bind(getPlayerColor());
 
-        IntegerBinding angDiff = selectInteger(oe.getPropertyBinding(Integer.class, "m_anglediff", 0));
+        var angDiff = selectInteger(oe.getPropertyBinding(Integer.class, "m_anglediff", 0));
 
         shape.translateXProperty().bind(getMapX());
         shape.translateYProperty().bind(getMapY());
@@ -38,8 +38,8 @@ public class PointingHeroIcon extends EntityIcon<Polygon> {
     }
 
     private DoubleBinding getBaseAngle() {
-        long modelHandle = getModelHandle().get();
-        DoubleBinding binding = BASE_ANGLES.get(modelHandle);
+        var modelHandle = getModelHandle().get();
+        var binding = BASE_ANGLES.get(modelHandle);
         if (binding != null) {
             return binding;
         }

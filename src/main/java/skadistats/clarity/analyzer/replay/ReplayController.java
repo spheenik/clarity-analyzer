@@ -31,7 +31,7 @@ import java.util.concurrent.TimeUnit;
 public class ReplayController {
 
     private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(r -> {
-        Thread t = new Thread(r);
+        var t = new Thread(r);
         t.setDaemon(true);
         return t;
     });
@@ -87,7 +87,7 @@ public class ReplayController {
     }
 
     private void sliderValueChanged(ObservableValue<? extends Number> v, Number o, Number n) {
-        double val = n.doubleValue();
+        var val = n.doubleValue();
         // Hack: if the value is not exactly an integer, the slider has been clicked
         if (val != Math.floor(val)) {
             getRunner().setDemandedTick(n.intValue());
@@ -105,7 +105,7 @@ public class ReplayController {
             if (slider.isValueChanging()) {
                 return;
             }
-            PropertySupportRunner r = getRunner();
+            var r = getRunner();
             if (r.getTick() < r.getLastTick() && !r.isResetting()) {
                 r.setDemandedTick(r.getTick() + 1);
             }
@@ -115,9 +115,9 @@ public class ReplayController {
     public void load(File f) {
         try {
             haltIfRunning();
-            PropertySupportRunner r = new PropertySupportRunner(new LiveSource(f.getAbsoluteFile().toString(), 30, TimeUnit.SECONDS));
+            var r = new PropertySupportRunner(new LiveSource(f.getAbsoluteFile().toString(), 30, TimeUnit.SECONDS));
             TickHelper.engineType = r.getEngineType();
-            ObservableEntityList observableEntities = new ObservableEntityList(r.getEngineType());
+            var observableEntities = new ObservableEntityList(r.getEngineType());
             runner.setValue(r);
             r.runWith(this, observableEntities);
             entityList.set(observableEntities);

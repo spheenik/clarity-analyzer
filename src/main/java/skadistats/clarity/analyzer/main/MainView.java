@@ -91,7 +91,7 @@ public class MainView implements Initializable {
         preferences = Preferences.userNodeForPackage(this.getClass());
         replayController = new ReplayController(slider);
 
-        BooleanBinding runnerIsNull = createBooleanBinding(() -> replayController.getRunner() == null, replayController.runnerProperty());
+        var runnerIsNull = createBooleanBinding(() -> replayController.getRunner() == null, replayController.runnerProperty());
         buttonPlay.disableProperty().bind(runnerIsNull);
         buttonPlay.textProperty().bind(EasyBind.map(replayController.playingProperty(), playing -> playing ? "⏸" : "⏵"));
         slider.disableProperty().bind(runnerIsNull);
@@ -101,11 +101,11 @@ public class MainView implements Initializable {
 
         // filtered entity list
         filteredEntityList.bind(createObjectBinding(() -> {
-                ObservableEntityList src = replayController.getEntityList();
+                var src = replayController.getEntityList();
                 if (src == null) return null;
-                FilteredList<ObservableEntity> filteredList = new FilteredList<>(src);
+                var filteredList = new FilteredList<ObservableEntity>(src);
                 filteredList.predicateProperty().bind(createObjectBinding(() -> {
-                        String filter = entityNameFilter.getText();
+                        var filter = entityNameFilter.getText();
                         return e ->
                             (!hideEmptySlots.isSelected() || e.getDtClass() != null)
                                 && (filter.isEmpty() || e.getName().toLowerCase().contains(filter.toLowerCase()));
@@ -119,11 +119,11 @@ public class MainView implements Initializable {
 
         // filtered property list
         filteredPropertyList.bind(createObjectBinding(() -> {
-                ObservableEntity src = entityTable.getSelectionModel().selectedItemProperty().get();
+                var src = entityTable.getSelectionModel().selectedItemProperty().get();
                 if (src == null) return null;
-                FilteredList<ObservableEntityProperty> filteredList = new FilteredList<>(src);
+                var filteredList = new FilteredList<ObservableEntityProperty>(src);
                 filteredList.predicateProperty().bind(createObjectBinding(() -> {
-                        String filter = propertyNameFilter.getText();
+                        var filter = propertyNameFilter.getText();
                         return oe ->
                             (!onlyRecentlyUpdated.isSelected() || TickHelper.isRecent(oe.getLastChangedAtTick()))
                                 && (filter.isEmpty() || oe.getName().toLowerCase().contains(filter.toLowerCase()));
@@ -172,7 +172,7 @@ public class MainView implements Initializable {
     }
 
     private <S, V> void createTableCell(TableView<S> tableView, String header, Class<V> valueClass, Consumer<TableColumn<S, V>> columnInitializer) {
-        TableColumn<S, V> column = new TableColumn<>(header);
+        var column = new TableColumn<S, V>(header);
         tableView.getColumns().add(column);
         columnInitializer.accept(column);
     }
@@ -183,18 +183,18 @@ public class MainView implements Initializable {
     }
 
     public void actionOpen(ActionEvent actionEvent) {
-        FileChooser fileChooser = new FileChooser();
+        var fileChooser = new FileChooser();
         fileChooser.setTitle("Load a replay");
         fileChooser.getExtensionFilters().addAll(
             new FileChooser.ExtensionFilter("Replay files", "*.dem"),
             new FileChooser.ExtensionFilter("All files", "*")
         );
-        File dir = new File(preferences.get("fileChooserPath", "."));
+        var dir = new File(preferences.get("fileChooserPath", "."));
         if (!dir.isDirectory()) {
             dir = new File(".");
         }
         fileChooser.setInitialDirectory(dir);
-        File replayFile = fileChooser.showOpenDialog(Analyzer.primaryStage);
+        var replayFile = fileChooser.showOpenDialog(Analyzer.primaryStage);
         if (replayFile == null) {
             return;
         }
@@ -209,7 +209,7 @@ public class MainView implements Initializable {
     private void handleDetailTableKeyPressed(KeyEvent e) {
         KeyCombination ctrlC = new KeyCodeCombination(KeyCode.C, KeyCodeCombination.CONTROL_DOWN);
         if (ctrlC.match(e)) {
-            ClipboardContent cbc = new ClipboardContent();
+            var cbc = new ClipboardContent();
             cbc.putString(detailTable.getSelectionModel().getSelectedIndices().stream()
                     .map(i -> detailTable.getItems().get(i))
                     .map(p -> String.format("%s %s %s", p.getFieldPath(), p.getName(), p.getValue()))

@@ -78,9 +78,9 @@ public class MapControl extends Region {
     }
 
     private void add(int from, List<? extends ObservableEntity> entities) {
-        for (int i = 0; i < entities.size(); i++) {
-            ObservableEntity oe = entities.get(i);
-            DTClass cls = oe.getDtClass();
+        for (var i = 0; i < entities.size(); i++) {
+            var oe = entities.get(i);
+            var cls = oe.getDtClass();
             if (cls == null) {
                 continue;
             }
@@ -94,7 +94,7 @@ public class MapControl extends Region {
     }
 
     private void clear(int from, int to) {
-        for (int i = from; i < to; i++) {
+        for (var i = from; i < to; i++) {
             if (mapEntities[i] != null) {
                 iconContainer.icons.getChildren().remove(mapEntities[i].getShape());
                 mapEntities[i] = null;
@@ -135,9 +135,9 @@ public class MapControl extends Region {
                 background.setHeight(newValue.getHeight());
             });
 
-            DoubleBinding scaleBinding = createDoubleBinding(
+            var scaleBinding = createDoubleBinding(
                     () -> {
-                        Bounds b = icons.getLayoutBounds();
+                        var b = icons.getLayoutBounds();
                         return Math.min(getWidth() / b.getWidth(), getHeight() / b.getHeight());
                     },
                     widthProperty(),
@@ -149,7 +149,7 @@ public class MapControl extends Region {
 
             translate.xProperty().bind(createDoubleBinding(
                     () -> {
-                        Bounds b = icons.getLayoutBounds();
+                        var b = icons.getLayoutBounds();
                         return -b.getMinX() + (getWidth() / scaleBinding.get() - b.getWidth()) * 0.5;
                     },
                     layoutBoundsProperty(),
@@ -157,7 +157,7 @@ public class MapControl extends Region {
             ));
             translate.yProperty().bind(createDoubleBinding(
                     () -> {
-                        Bounds b = icons.getLayoutBounds();
+                        var b = icons.getLayoutBounds();
                         return -b.getMinY() + (getHeight() / scaleBinding.get() - b.getHeight()) * 0.5;
                     },
                     layoutBoundsProperty(),

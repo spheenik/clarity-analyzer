@@ -16,8 +16,8 @@ public class CameraIcon extends EntityIcon<Polygon> {
     public CameraIcon(PositionBinder pb, ObservableEntity oe) {
         super(pb, oe);
 
-        int w = W/2;
-        int h = H/2;
+        var w = W/2;
+        var h = H/2;
         shape = new Polygon(-w, -h, w, -h, w, h, -w, h);
         shape.setFill(Color.TRANSPARENT);
         shape.setStrokeWidth(20);

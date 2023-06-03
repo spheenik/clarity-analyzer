@@ -17,7 +17,7 @@ public class CSGOS1BindingGenerator implements BindingGenerator {
 
     @Override
     public EntityIcon<?> createEntityIcon(ObservableEntity oe) {
-        String name = oe.getDtClass().getDtName();
+        var name = oe.getDtClass().getDtName();
         if (name.equals("DT_CSPlayer")) {
             return new PlayerIcon(PB_STANDARD, oe);
         } else if (PB_STANDARD.hasPosition(oe)) {
