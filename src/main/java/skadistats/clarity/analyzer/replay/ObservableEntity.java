@@ -20,6 +20,7 @@ import skadistats.clarity.io.s2.S2DTClass;
 import skadistats.clarity.model.DTClass;
 import skadistats.clarity.model.FieldPath;
 import skadistats.clarity.model.state.EntityState;
+import skadistats.clarity.util.FieldPathUtil;
 import skadistats.clarity.util.StateDifferenceEvaluator;
 
 import java.util.ArrayList;
@@ -226,8 +227,8 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
             return properties.get(idx);
         }
         @Override
-        public int compareTo(FieldPath o) {
-            return fp.compareTo(o);
+        public int compareTo(FieldPath other) {
+            return FieldPathUtil.compare(fp, other);
         }
     }
 

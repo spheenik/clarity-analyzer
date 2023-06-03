@@ -8,6 +8,7 @@ import javafx.beans.property.ReadOnlyStringProperty;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import skadistats.clarity.analyzer.util.TickHelper;
 import skadistats.clarity.model.FieldPath;
+import skadistats.clarity.util.FieldPathUtil;
 
 import java.util.Arrays;
 import java.util.function.Supplier;
@@ -104,8 +105,8 @@ public class ObservableEntityProperty implements Comparable<FieldPath> {
     }
 
     @Override
-    public int compareTo(FieldPath o) {
-        return getFieldPath().compareTo(o);
+    public int compareTo(FieldPath other) {
+        return FieldPathUtil.compare(getFieldPath(), other);
     }
 
     @Override
