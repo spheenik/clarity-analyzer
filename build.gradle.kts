@@ -26,7 +26,7 @@ repositories {
 dependencies {
     implementation("com.skadistats:clarity:3.0.0-SNAPSHOT")
     implementation("com.tobiasdiez:easybind:2.2")
-    implementation("ch.qos.logback:logback-classic:1.3.5")
+    implementation("ch.qos.logback:logback-classic:1.4.7")
     runtimeOnly("org.openjfx:javafx-graphics:${javafx.version}:win")
     runtimeOnly("org.openjfx:javafx-graphics:${javafx.version}:linux")
     runtimeOnly("org.openjfx:javafx-graphics:${javafx.version}:mac")
