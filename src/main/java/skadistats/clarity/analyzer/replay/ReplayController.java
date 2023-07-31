@@ -74,7 +74,7 @@ public class ReplayController {
                 timer = executor.scheduleAtFixedRate(
                         this::timerTick,
                         0L,
-                        (long)(getRunner().getEngineType().getMillisPerTick() * 1000000.0f),
+                        (long)(getRunner().getEngineType().getContextData().getMillisPerTick() * 1000000.0f),
                         TimeUnit.NANOSECONDS
                 );
             }

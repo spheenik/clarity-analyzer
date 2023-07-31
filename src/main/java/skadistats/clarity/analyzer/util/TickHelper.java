@@ -9,11 +9,11 @@ public class TickHelper {
 
 
     public static int secondsToTicks(int seconds) {
-        return (int)(seconds * 1000.0f / engineType.getMillisPerTick());
+        return (int)(seconds * 1000.0f / engineType.getContextData().getMillisPerTick());
     }
 
     public static float millisSince(int previousTick) {
-        return (currentTick - previousTick) * engineType.getMillisPerTick();
+        return (currentTick - previousTick) * engineType.getContextData().getMillisPerTick();
     }
 
     public static boolean isRecent(int previousTick) {
