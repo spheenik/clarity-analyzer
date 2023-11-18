@@ -6,7 +6,9 @@ import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.ReadOnlyStringProperty;
 import javafx.beans.property.ReadOnlyStringWrapper;
+import skadistats.clarity.analyzer.util.TickHelper;
 import skadistats.clarity.model.FieldPath;
+import skadistats.clarity.util.FieldPathUtil;
 
 import java.util.Arrays;
 import java.util.function.Supplier;
@@ -18,27 +20,29 @@ public class ObservableEntityProperty implements Comparable<FieldPath> {
     private final ReadOnlyObjectProperty<FieldPath> fieldPath;
     private final ReadOnlyStringWrapper type;
     private final ReadOnlyStringProperty name;
-    private final ObjectBinding value;
+    private final ObjectBinding<Object> value;
     private final StringBinding valueAsString;
-    private long lastChangedAt;
+    private int lastChangedAtTick;
+    private long lastChangedAtMillis;
 
     public ObservableEntityProperty(FieldPath fp, String type, String name, Supplier<Object> valueSupplier) {
         this.fieldPath = new ReadOnlyObjectWrapper<>(fp);
         this.type = new ReadOnlyStringWrapper(type);
         this.name = new ReadOnlyStringWrapper(name);
-        this.value = new ObjectBinding() {
+        this.value = new ObjectBinding<>() {
             @Override
             protected Object computeValue() {
                 return valueSupplier.get();
             }
             @Override
             protected void onInvalidating() {
-                lastChangedAt = System.currentTimeMillis();
+                lastChangedAtTick = TickHelper.currentTick;
+                lastChangedAtMillis = System.currentTimeMillis();
             }
         };
         this.valueAsString = createStringBinding(
                 () -> {
-                    Object v = value.get();
+                    var v = value.get();
                     if (v == null) {
                         return "<NULL>";
                     } else if (v instanceof Object[]) {
@@ -49,6 +53,7 @@ public class ObservableEntityProperty implements Comparable<FieldPath> {
                 },
                 this.value
         );
+        this.lastChangedAtTick = TickHelper.currentTick;
     }
 
     public FieldPath getFieldPath() {
@@ -79,7 +84,7 @@ public class ObservableEntityProperty implements Comparable<FieldPath> {
         return value.get();
     }
 
-    public ObjectBinding valueProperty() {
+    public ObjectBinding<Object> valueProperty() {
         return value;
     }
 
@@ -91,13 +96,17 @@ public class ObservableEntityProperty implements Comparable<FieldPath> {
         return valueAsString;
     }
 
-    public long getLastChangedAt() {
-        return lastChangedAt;
+    public int getLastChangedAtTick() {
+        return lastChangedAtTick;
+    }
+
+    public long getLastChangedAtMillis() {
+        return lastChangedAtMillis;
     }
 
     @Override
-    public int compareTo(FieldPath o) {
-        return getFieldPath().compareTo(o);
+    public int compareTo(FieldPath other) {
+        return FieldPathUtil.compare(getFieldPath(), other);
     }
 
     @Override

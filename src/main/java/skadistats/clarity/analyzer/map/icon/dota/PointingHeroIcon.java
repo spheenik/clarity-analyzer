@@ -1,24 +1,23 @@
 package skadistats.clarity.analyzer.map.icon.dota;
 
-import javafx.beans.binding.Bindings;
 import javafx.beans.binding.DoubleBinding;
 import javafx.beans.binding.IntegerBinding;
-import javafx.beans.binding.ObjectBinding;
 import javafx.scene.shape.Polygon;
-import skadistats.clarity.analyzer.map.binding.BindingGenerator;
 import skadistats.clarity.analyzer.map.icon.EntityIcon;
+import skadistats.clarity.analyzer.map.position.PositionBinder;
 import skadistats.clarity.analyzer.replay.ObservableEntity;
-import skadistats.clarity.model.Vector;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import static javafx.beans.binding.Bindings.selectInteger;
 
 public class PointingHeroIcon extends EntityIcon<Polygon> {
 
     private final Polygon shape;
 
-    public PointingHeroIcon(BindingGenerator bg, ObservableEntity oe) {
-        super(bg, oe);
+    public PointingHeroIcon(PositionBinder pb, ObservableEntity oe) {
+        super(pb, oe);
 
         shape = new Polygon(
             0, -200, -120, 200, 120, 200
@@ -26,14 +25,11 @@ public class PointingHeroIcon extends EntityIcon<Polygon> {
 
         shape.fillProperty().bind(getPlayerColor());
 
-        ObjectBinding<Vector> angRotVector = oe.getPropertyBinding(Vector.class, "CBodyComponent.m_angRotation", null);
-        DoubleBinding angRot = Bindings.createDoubleBinding(() -> (double) angRotVector.get().getElement(1), angRotVector);
-
-        IntegerBinding angDiff = Bindings.selectInteger(oe.getPropertyBinding(Integer.class, "m_anglediff", 0));
+        var angDiff = selectInteger(oe.getPropertyBinding(Integer.class, "m_anglediff", 0));
 
         shape.translateXProperty().bind(getMapX());
         shape.translateYProperty().bind(getMapY());
-        shape.rotateProperty().bind(getBaseAngle().add(angRot).add(angDiff));
+        shape.rotateProperty().bind(getBaseAngle().add(selectInteger(getRotation())).add(angDiff));
     }
 
     @Override
@@ -42,8 +38,8 @@ public class PointingHeroIcon extends EntityIcon<Polygon> {
     }
 
     private DoubleBinding getBaseAngle() {
-        long modelHandle = getModelHandle().get();
-        DoubleBinding binding = BASE_ANGLES.get(modelHandle);
+        var modelHandle = getModelHandle().get();
+        var binding = BASE_ANGLES.get(modelHandle);
         if (binding != null) {
             return binding;
         }

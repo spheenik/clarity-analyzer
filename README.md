@@ -1,19 +1,43 @@
 # Clarity Analyzer
 
-JavaFX-Application to interactively visualize the raw data of a Dota 2 replay.
+JavaFX-Application to interactively visualize the raw data of a Dota 2 / CSGO / CSGO 2 replay.
 
 ![Clarity Analyzer](/screenshot.png?raw=true)
 
+# Requirements
+
+JDK version 17 and above
+
 # Building
 
-Attention: Only builds and runs with Java 8 atm!
+Depending on your OS, issue the following command in the base project folder
 
-`mvn package`
+#### Windows
+`gradlew.bat packageUnoJar`
+
+#### Linux / Mac
+`./gradlew packageUnoJar`
 
 # Running
 
-`java -jar target\analyzer.one-jar.jar`
+## Run from gradle
+If you do this, you can skip the building step. From the base project folder:
+
+#### Windows
+`gradlew.bat run`
+
+#### Linux / Mac
+`./gradlew run`
+
+## Run from jar
+You need to build first. Then, from the base project folder:
+
+#### Windows
+`java -jar build\libs\clarity-analyzer.jar`
+
+#### Linux / Mac
+`java -jar build/libs/clarity-analyzer.jar`
 
 # License
 
-See LICENSE in the project root.
+See ![LICENSE](/LICENSE) in the project root.

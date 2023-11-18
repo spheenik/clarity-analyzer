@@ -3,6 +3,7 @@ package skadistats.clarity.analyzer.replay;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.IntegerBinding;
+import skadistats.clarity.analyzer.util.TickHelper;
 import skadistats.clarity.processor.runner.ControllableRunner;
 import skadistats.clarity.source.Source;
 
@@ -21,6 +22,7 @@ public class PropertySupportRunner extends ControllableRunner {
     @Override
     protected void setTick(int tick) {
         super.setTick(tick);
+        TickHelper.currentTick = tick;
         Platform.runLater(this.tick::invalidate);
     }
 

@@ -1,5 +1,6 @@
 package skadistats.clarity.analyzer.replay;
 
+import com.tobiasdiez.easybind.EasyBind;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.IntegerBinding;
@@ -10,11 +11,11 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.scene.control.Slider;
-import org.fxmisc.easybind.EasyBind;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import skadistats.clarity.analyzer.Main;
+import skadistats.clarity.analyzer.Analyzer;
 import skadistats.clarity.analyzer.main.ExceptionDialog;
+import skadistats.clarity.analyzer.util.TickHelper;
 import skadistats.clarity.io.Util;
 import skadistats.clarity.processor.entities.UsesEntities;
 import skadistats.clarity.source.LiveSource;
@@ -30,7 +31,7 @@ import java.util.concurrent.TimeUnit;
 public class ReplayController {
 
     private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(r -> {
-        Thread t = new Thread(r);
+        var t = new Thread(r);
         t.setDaemon(true);
         return t;
     });
@@ -64,7 +65,7 @@ public class ReplayController {
         playing.addListener(this::playingStateChanged);
         slider.valueProperty().addListener(this::sliderValueChanged);
         tick.addListener(this::tickChanged);
-        Main.primaryStage.setOnCloseRequest(event -> haltIfRunning());
+        Analyzer.primaryStage.setOnCloseRequest(event -> haltIfRunning());
     }
 
     private void playingStateChanged(ObservableValue<? extends Boolean> v, Boolean o, Boolean n) {
@@ -73,7 +74,7 @@ public class ReplayController {
                 timer = executor.scheduleAtFixedRate(
                         this::timerTick,
                         0L,
-                        (long)(getRunner().getEngineType().getMillisPerTick() * 1000000.0f),
+                        (long)(getRunner().getEngineType().getContextData().getMillisPerTick() * 1000000.0f),
                         TimeUnit.NANOSECONDS
                 );
             }
@@ -86,7 +87,7 @@ public class ReplayController {
     }
 
     private void sliderValueChanged(ObservableValue<? extends Number> v, Number o, Number n) {
-        double val = n.doubleValue();
+        var val = n.doubleValue();
         // Hack: if the value is not exactly an integer, the slider has been clicked
         if (val != Math.floor(val)) {
             getRunner().setDemandedTick(n.intValue());
@@ -104,7 +105,7 @@ public class ReplayController {
             if (slider.isValueChanging()) {
                 return;
             }
-            PropertySupportRunner r = getRunner();
+            var r = getRunner();
             if (r.getTick() < r.getLastTick() && !r.isResetting()) {
                 r.setDemandedTick(r.getTick() + 1);
             }
@@ -114,8 +115,9 @@ public class ReplayController {
     public void load(File f) {
         try {
             haltIfRunning();
-            PropertySupportRunner r = new PropertySupportRunner(new LiveSource(f.getAbsoluteFile().toString(), 30, TimeUnit.SECONDS));
-            ObservableEntityList observableEntities = new ObservableEntityList(r.getEngineType());
+            var r = new PropertySupportRunner(new LiveSource(f.getAbsoluteFile().toString(), 30, TimeUnit.SECONDS));
+            TickHelper.engineType = r.getEngineType();
+            var observableEntities = new ObservableEntityList(r.getEngineType());
             runner.setValue(r);
             r.runWith(this, observableEntities);
             entityList.set(observableEntities);
@@ -159,6 +161,10 @@ public class ReplayController {
 
     public void setPlaying(boolean playing) {
         this.playing.set(playing);
+    }
+
+    public boolean isPlaying() {
+        return playing.get();
     }
 
     public ObservableEntityList getEntityList() {

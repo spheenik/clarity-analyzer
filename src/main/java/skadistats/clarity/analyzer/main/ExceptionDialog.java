@@ -18,18 +18,18 @@ public class ExceptionDialog {
     }
 
     public void show() {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
+        var alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle("Error");
         alert.setHeaderText("An error occurred");
         alert.setContentText(e.getMessage());
 
-        StringWriter sw = new StringWriter();
+        var sw = new StringWriter();
         e.printStackTrace(new PrintWriter(sw));
-        String exceptionText = sw.toString();
+        var exceptionText = sw.toString();
 
-        Label label = new Label("The exception stacktrace was:");
+        var label = new Label("The exception stacktrace was:");
 
-        TextArea textArea = new TextArea(exceptionText);
+        var textArea = new TextArea(exceptionText);
         textArea.setEditable(false);
         textArea.setWrapText(true);
 
@@ -38,7 +38,7 @@ public class ExceptionDialog {
         GridPane.setVgrow(textArea, Priority.ALWAYS);
         GridPane.setHgrow(textArea, Priority.ALWAYS);
 
-        GridPane expContent = new GridPane();
+        var expContent = new GridPane();
         expContent.setMaxWidth(Double.MAX_VALUE);
         expContent.add(label, 0, 0);
         expContent.add(textArea, 0, 1);
