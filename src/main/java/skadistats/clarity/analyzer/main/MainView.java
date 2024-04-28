@@ -137,7 +137,11 @@ public class MainView implements Initializable {
 
         entityTable.itemsProperty().bind(filteredEntityList);
         detailTable.itemsProperty().bind(filteredPropertyList);
-
+        mapControl.selectedEntityPropertyProperty().addListener((observable, oldValue, newValue) -> {
+            entityTable.getSelectionModel().select(newValue);
+            int index = entityTable.getSelectionModel().getSelectedIndex();
+            entityTable.scrollTo(index);
+        });
         // entity table
         createTableCell(entityTable, "#", String.class, col ->
                 col.setCellValueFactory(f -> f.getValue().indexProperty().asString())
