@@ -6,6 +6,7 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ListChangeListener;
 import javafx.geometry.Bounds;
+import javafx.scene.Cursor;
 import javafx.scene.Group;
 import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
@@ -37,6 +38,20 @@ public class MapControl extends Region {
         iconContainer = new IconContainer();
         getChildren().add(iconContainer);
         entityList.addListener(this::onEntityListSet);
+    }
+
+    private final ObjectProperty<ObservableEntity> selectedEntityProperty = new SimpleObjectProperty<>();
+
+    public final ObjectProperty<ObservableEntity> selectedEntityPropertyProperty() {
+        return selectedEntityProperty;
+    }
+    
+    public final ObservableEntity getSelectedEntity() {
+        return selectedEntityProperty.get();
+    }
+    
+    public final void setSelectedEntity(ObservableEntity entity) {
+        selectedEntityProperty.set(entity);
     }
 
     private void onEntityListSet(ObservableValue<? extends ObservableEntityList> observable, ObservableEntityList oldList, ObservableEntityList newList) {
@@ -89,6 +104,9 @@ public class MapControl extends Region {
                 continue;
             }
             mapEntities[from + i] = icon;
+            icon.getShape().setOnMouseEntered(event -> icon.getShape().getScene().setCursor(Cursor.HAND));
+            icon.getShape().setOnMouseExited(event -> icon.getShape().getScene().setCursor(Cursor.DEFAULT));
+            icon.getShape().setOnMouseClicked(event -> setSelectedEntity(oe));
             iconContainer.icons.getChildren().add(icon.getShape());
         }
     }
