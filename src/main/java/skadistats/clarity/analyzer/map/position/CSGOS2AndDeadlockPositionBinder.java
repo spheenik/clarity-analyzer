@@ -5,7 +5,7 @@ import com.tobiasdiez.easybind.EasyBind;
 import skadistats.clarity.analyzer.replay.ObservableEntity;
 import skadistats.clarity.model.Vector;
 
-public class CSGOS2PositionBinder implements PositionBinder {
+public class CSGOS2AndDeadlockPositionBinder implements PositionBinder {
 
     private static final Vector ZERO = new Vector(0.0f, 0.0f);
 

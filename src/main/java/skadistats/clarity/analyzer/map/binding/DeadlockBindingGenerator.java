@@ -9,12 +9,12 @@ import skadistats.clarity.analyzer.map.position.PositionBinder;
 import skadistats.clarity.analyzer.replay.ObservableEntity;
 import skadistats.clarity.analyzer.replay.ObservableEntityList;
 
-public class CSGOS2BindingGenerator implements BindingGenerator {
+public class DeadlockBindingGenerator implements BindingGenerator {
 
     private final PositionBinder PB_STANDARD;
     private final PositionBinder PB_PLAYER;
 
-    public CSGOS2BindingGenerator(ObservableEntityList entityList) {
+    public DeadlockBindingGenerator(ObservableEntityList entityList) {
         PB_STANDARD = new CSGOS2AndDeadlockPositionBinder();
         PB_PLAYER = new DeferringPositionBinder(entityList, PB_STANDARD, "m_hPawn");
     }
@@ -22,9 +22,9 @@ public class CSGOS2BindingGenerator implements BindingGenerator {
     @Override
     public EntityIcon<?> createEntityIcon(ObservableEntity oe) {
         var name = oe.getDtClass().getDtName();
-        if (name.equals("CCSPlayerController")) {
+        if (name.equals("CCitadelPlayerController")) {
             return new PlayerIcon(PB_PLAYER, oe);
-        } else if (name.equals("CCSPlayerPawn")) {
+        } else if (name.equals("CCitadelPlayerPawn")) {
             return null;
         } else if (PB_STANDARD.hasPosition(oe)) {
             return new DefaultIcon(PB_STANDARD, oe);

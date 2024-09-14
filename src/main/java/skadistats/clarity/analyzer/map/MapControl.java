@@ -15,6 +15,7 @@ import javafx.scene.transform.Translate;
 import skadistats.clarity.analyzer.map.binding.BindingGenerator;
 import skadistats.clarity.analyzer.map.binding.CSGOS1BindingGenerator;
 import skadistats.clarity.analyzer.map.binding.CSGOS2BindingGenerator;
+import skadistats.clarity.analyzer.map.binding.DeadlockBindingGenerator;
 import skadistats.clarity.analyzer.map.binding.DotaS1BindingGenerator;
 import skadistats.clarity.analyzer.map.binding.DotaS2BindingGenerator;
 import skadistats.clarity.analyzer.map.icon.EntityIcon;
@@ -59,6 +60,8 @@ public class MapControl extends Region {
                 return new CSGOS1BindingGenerator(entityList);
             case CSGO_S2:
                 return new CSGOS2BindingGenerator(entityList);
+            case DEADLOCK:
+                return new DeadlockBindingGenerator(entityList);
             default:
                 return null;
         }
