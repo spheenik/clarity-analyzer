@@ -27,7 +27,7 @@ public class CSGOS2AndDeadlockPositionBinder implements PositionBinder {
         return EasyBind.combine(
                 oe.getPropertyBinding(Integer.class,  "CBodyComponent.m_cell" + which, 127),
                 oe.getPropertyBinding(Float.class,  "CBodyComponent.m_vec" + which, 0.0f),
-                (cell, vec) -> sign * (cell * 1024.0f + vec)
+                (cell, vec) -> sign * (cell * 512.0f + vec)
         );
     }
 
