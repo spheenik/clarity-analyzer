@@ -1,11 +1,9 @@
 package skadistats.clarity.analyzer.map;
 
-import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ListChangeListener;
-import javafx.geometry.Bounds;
 import javafx.scene.Group;
 import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
@@ -21,7 +19,6 @@ import skadistats.clarity.analyzer.map.binding.DotaS2BindingGenerator;
 import skadistats.clarity.analyzer.map.icon.EntityIcon;
 import skadistats.clarity.analyzer.replay.ObservableEntity;
 import skadistats.clarity.analyzer.replay.ObservableEntityList;
-import skadistats.clarity.model.DTClass;
 
 import java.util.List;
 
