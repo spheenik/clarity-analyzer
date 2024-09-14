@@ -1,11 +1,9 @@
 package skadistats.clarity.analyzer.map;
 
-import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ListChangeListener;
-import javafx.geometry.Bounds;
 import javafx.scene.Group;
 import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
@@ -15,12 +13,12 @@ import javafx.scene.transform.Translate;
 import skadistats.clarity.analyzer.map.binding.BindingGenerator;
 import skadistats.clarity.analyzer.map.binding.CSGOS1BindingGenerator;
 import skadistats.clarity.analyzer.map.binding.CSGOS2BindingGenerator;
+import skadistats.clarity.analyzer.map.binding.DeadlockBindingGenerator;
 import skadistats.clarity.analyzer.map.binding.DotaS1BindingGenerator;
 import skadistats.clarity.analyzer.map.binding.DotaS2BindingGenerator;
 import skadistats.clarity.analyzer.map.icon.EntityIcon;
 import skadistats.clarity.analyzer.replay.ObservableEntity;
 import skadistats.clarity.analyzer.replay.ObservableEntityList;
-import skadistats.clarity.model.DTClass;
 
 import java.util.List;
 
@@ -59,6 +57,8 @@ public class MapControl extends Region {
                 return new CSGOS1BindingGenerator(entityList);
             case CSGO_S2:
                 return new CSGOS2BindingGenerator(entityList);
+            case DEADLOCK:
+                return new DeadlockBindingGenerator(entityList);
             default:
                 return null;
         }
