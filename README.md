@@ -1,6 +1,6 @@
 # Clarity Analyzer
 
-JavaFX-Application to interactively visualize the raw data of a Dota 2 / CSGO / CSGO 2 replay.
+JavaFX-Application to interactively visualize the raw data of a Dota 2, CSGO, CS2 or Deadlock replay.
 
 ![Clarity Analyzer](/screenshot.png?raw=true)
 
