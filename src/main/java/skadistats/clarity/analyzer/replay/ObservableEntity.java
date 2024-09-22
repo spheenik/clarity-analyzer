@@ -1,7 +1,6 @@
 package skadistats.clarity.analyzer.replay;
 
 import com.tobiasdiez.easybind.EasyBind;
-import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import javafx.beans.binding.ObjectBinding;
@@ -15,18 +14,21 @@ import javafx.beans.value.ObservableValueBase;
 import javafx.collections.ObservableListBase;
 import lombok.extern.slf4j.Slf4j;
 import skadistats.clarity.analyzer.util.TickHelper;
-import skadistats.clarity.io.s2.Field;
+import skadistats.clarity.io.s2.FieldType;
 import skadistats.clarity.io.s2.S2DTClass;
 import skadistats.clarity.model.DTClass;
 import skadistats.clarity.model.FieldPath;
+import skadistats.clarity.model.s1.PropType;
 import skadistats.clarity.model.state.EntityState;
 import skadistats.clarity.util.FieldPathUtil;
 import skadistats.clarity.util.StateDifferenceEvaluator;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
+
+import static skadistats.clarity.analyzer.replay.ObservableEntityCellType.DEFAULT;
+import static skadistats.clarity.analyzer.replay.ObservableEntityCellType.HANDLE;
 
 @Slf4j
 public class ObservableEntity extends ObservableListBase<ObservableEntityProperty> {
@@ -73,18 +75,48 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
         return properties;
     }
 
+
     private ObservableEntityProperty createProperty(FieldPath fp) {
-        var type = dtClass.evaluate(
-                s1 -> s1.getReceiveProps()[fp.s1().idx()].getSendProp().getType().toString(),
-                s2 -> s2.getTypeForFieldPath(fp.s2()).toString()
+        var propName = dtClass.getNameForFieldPath(fp);
+        record TypeInfo(String typeName, ObservableEntityCellType cellType) {}
+        var typeInfo = dtClass.evaluate(
+                s1 -> {
+                    var propType = s1.getReceiveProps()[fp.s1().idx()].getSendProp().getType();
+                    return new TypeInfo(
+                            propType.toString(),
+                            cellTypeForS1(propName, propType)
+                    );
+                },
+                s2 -> {
+                    var fieldType = s2.getTypeForFieldPath(fp.s2());
+                    return new TypeInfo(
+                            fieldType.toString(),
+                            cellTypeForS2(propName, fieldType)
+                    );
+                }
         );
         var property = new ObservableEntityProperty(
                 fp,
-                type,
-                dtClass.getNameForFieldPath(fp),
+                typeInfo.cellType,
+                typeInfo.typeName,
+                propName,
                 () -> ObservableEntity.this.state.getValueForFieldPath(fp)
         );
         return property;
+    }
+
+    private ObservableEntityCellType cellTypeForS1(String propName, PropType propType) {
+        if (propName.startsWith("m_h")) {
+            return HANDLE;
+        }
+        return DEFAULT;
+    }
+
+    private ObservableEntityCellType cellTypeForS2(String propName, FieldType fieldType) {
+        if ("CHandle".equals(fieldType.getBaseType())) {
+            return HANDLE;
+        }
+        return DEFAULT;
     }
 
     public void performCreate(int tick) {
@@ -217,6 +249,7 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
 
     public class ObservableEntityPropertyBinding extends ObjectBinding<ObservableEntityProperty> implements Comparable<FieldPath> {
         private final FieldPath fp;
+
         private ObservableEntityPropertyBinding(FieldPath fp) {
             this.fp = fp;
         }

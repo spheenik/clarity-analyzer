@@ -18,6 +18,7 @@ import static javafx.beans.binding.Bindings.createStringBinding;
 public class ObservableEntityProperty implements Comparable<FieldPath> {
 
     private final ReadOnlyObjectProperty<FieldPath> fieldPath;
+    private final ReadOnlyObjectProperty<ObservableEntityCellType> cellType;
     private final ReadOnlyStringWrapper type;
     private final ReadOnlyStringProperty name;
     private final ObjectBinding<Object> value;
@@ -25,8 +26,9 @@ public class ObservableEntityProperty implements Comparable<FieldPath> {
     private int lastChangedAtTick;
     private long lastChangedAtMillis;
 
-    public ObservableEntityProperty(FieldPath fp, String type, String name, Supplier<Object> valueSupplier) {
+    public ObservableEntityProperty(FieldPath fp, ObservableEntityCellType cellType, String type, String name, Supplier<Object> valueSupplier) {
         this.fieldPath = new ReadOnlyObjectWrapper<>(fp);
+        this.cellType = new ReadOnlyObjectWrapper<>(cellType);
         this.type = new ReadOnlyStringWrapper(type);
         this.name = new ReadOnlyStringWrapper(name);
         this.value = new ObjectBinding<>() {
@@ -62,6 +64,14 @@ public class ObservableEntityProperty implements Comparable<FieldPath> {
 
     public ReadOnlyObjectProperty<FieldPath> fieldPathProperty() {
         return fieldPath;
+    }
+
+    public ObservableEntityCellType getCellType() {
+        return cellType.get();
+    }
+
+    public ReadOnlyObjectProperty<ObservableEntityCellType> cellTypeProperty() {
+        return cellType;
     }
 
     public String getType() {

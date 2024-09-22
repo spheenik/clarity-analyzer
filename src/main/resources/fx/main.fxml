@@ -84,10 +84,43 @@
                                  </rowConstraints>
                                  <children>
                                     <TextField fx:id="entityNameFilter" minHeight="-Infinity" prefWidth="293.0" promptText="Filter by entity class..." />
-                                    <CheckBox fx:id="hideEmptySlots" mnemonicParsing="false" selected="true" text="hide empty slots" GridPane.rowIndex="1">
-                                       <GridPane.margin>
-                                          <Insets left="4.0" />
-                                       </GridPane.margin></CheckBox>
+                                     <GridPane GridPane.rowIndex="1">
+                                         <columnConstraints>
+                                             <ColumnConstraints hgrow="NEVER" />
+                                             <ColumnConstraints hgrow="ALWAYS" />
+                                         </columnConstraints>
+                                         <rowConstraints>
+                                             <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="NEVER" />
+                                         </rowConstraints>
+                                         <children>
+                                             <CheckBox fx:id="hideEmptySlots" mnemonicParsing="false" selected="true" text="hide empty slots" GridPane.columnIndex="1">
+                                                 <GridPane.margin>
+                                                     <Insets left="4.0" />
+                                                 </GridPane.margin>
+                                             </CheckBox>
+                                             <HBox GridPane.columnIndex="2">
+                                                 <GridPane.margin>
+                                                     <Insets top="4.0" right="4"/>
+                                                 </GridPane.margin>
+                                                 <Button fx:id="buttonNavigateBackward" alignment="CENTER" mnemonicParsing="false" text="⏴" onAction="#navigateBackward">
+                                                     <tooltip>
+                                                         <Tooltip text="Nagivate back"/>
+                                                     </tooltip>
+                                                     <font>
+                                                         <Font name="Arial" size="12.0" />
+                                                     </font>
+                                                 </Button>
+                                                 <Button fx:id="buttonNavigateForward" alignment="CENTER" mnemonicParsing="false" text="⏵" onAction="#navigateForward">
+                                                     <tooltip>
+                                                         <Tooltip text="Navigate forward"></Tooltip>
+                                                     </tooltip>
+                                                     <font>
+                                                         <Font name="Arial" size="12.0" />
+                                                     </font>
+                                                 </Button>
+                                             </HBox>
+                                         </children>
+                                     </GridPane>
                                     <TableView fx:id="entityTable" GridPane.rowIndex="2" GridPane.vgrow="ALWAYS">
                                        <columnResizePolicy>
                                           <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />

@@ -1,41 +1,49 @@
 package skadistats.clarity.analyzer.main;
 
 import com.tobiasdiez.easybind.EasyBind;
-import javafx.beans.binding.BooleanBinding;
+import com.tobiasdiez.easybind.optional.OptionalBinding;
+import javafx.animation.Animation;
+import javafx.animation.Interpolator;
+import javafx.animation.Transition;
 import javafx.beans.binding.ObjectBinding;
 import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.value.ObservableValue;
+import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.Button;
-import javafx.scene.control.CheckBox;
-import javafx.scene.control.Label;
-import javafx.scene.control.SelectionMode;
-import javafx.scene.control.Slider;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
-import javafx.scene.control.TextField;
+import javafx.geometry.Insets;
+import javafx.scene.control.*;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.paint.Color;
+import javafx.scene.text.TextAlignment;
 import javafx.stage.FileChooser;
+import javafx.util.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import skadistats.clarity.analyzer.Analyzer;
 import skadistats.clarity.analyzer.map.MapControl;
+import skadistats.clarity.analyzer.replay.NavigationController;
 import skadistats.clarity.analyzer.replay.ObservableEntity;
-import skadistats.clarity.analyzer.replay.ObservableEntityList;
+import skadistats.clarity.analyzer.replay.ObservableEntityCellType;
 import skadistats.clarity.analyzer.replay.ObservableEntityProperty;
 import skadistats.clarity.analyzer.replay.ReplayController;
 import skadistats.clarity.analyzer.util.TickHelper;
+import skadistats.clarity.model.EngineType;
 
 import java.io.File;
+import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.prefs.Preferences;
 import java.util.stream.Collectors;
 
@@ -50,6 +58,12 @@ public class MainView implements Initializable {
 
     @FXML
     public Button buttonPlay;
+
+    @FXML
+    public Button buttonNavigateBackward;
+
+    @FXML
+    public Button buttonNavigateForward;
 
     @FXML
     public Slider slider;
@@ -84,31 +98,59 @@ public class MainView implements Initializable {
     private Preferences preferences;
 
     private ReplayController replayController;
+    private NavigationController navigationController;
+
+    private ObservableEntity selectedEntity;
+
     private final ObjectProperty<FilteredList<ObservableEntity>> filteredEntityList = new SimpleObjectProperty<>();
     private final ObjectProperty<FilteredList<ObservableEntityProperty>> filteredPropertyList = new SimpleObjectProperty<>();
 
     public void initialize(java.net.URL location, java.util.ResourceBundle resources) {
         preferences = Preferences.userNodeForPackage(this.getClass());
         replayController = new ReplayController(slider);
+        navigationController = new NavigationController();
 
         var runnerIsNull = createBooleanBinding(() -> replayController.getRunner() == null, replayController.runnerProperty());
         buttonPlay.disableProperty().bind(runnerIsNull);
         buttonPlay.textProperty().bind(EasyBind.map(replayController.playingProperty(), playing -> playing ? "⏸" : "⏵"));
         slider.disableProperty().bind(runnerIsNull);
 
+        buttonNavigateBackward.disableProperty().bind(navigationController.canNavigateBackwardProperty().not().or(runnerIsNull));
+        buttonNavigateForward.disableProperty().bind(navigationController.canNavigateForwardProperty().not().or(runnerIsNull));
+
         labelTick.textProperty().bind(replayController.tickProperty().asString());
         labelLastTick.textProperty().bind(replayController.lastTickProperty().asString());
+
+        EasyBind.subscribe(
+                entityTable.getSelectionModel().selectedItemProperty(),
+                e -> {
+                    System.out.println("SELECTED " + e);
+                    selectedEntity = e;
+                }
+        );
 
         // filtered entity list
         filteredEntityList.bind(createObjectBinding(() -> {
                 var src = replayController.getEntityList();
                 if (src == null) return null;
-                var filteredList = new FilteredList<ObservableEntity>(src);
+                var filteredList = new FilteredList<>(src);
                 filteredList.predicateProperty().bind(createObjectBinding(() -> {
                         var filter = entityNameFilter.getText();
-                        return e ->
-                            (!hideEmptySlots.isSelected() || e.getDtClass() != null)
-                                && (filter.isEmpty() || e.getName().toLowerCase().contains(filter.toLowerCase()));
+                        return e -> {
+                            if (hideEmptySlots.isSelected() && e.getDtClass() == null) {
+                                return false;
+                            }
+                            if (filter.isEmpty()) {
+                                return true;
+                            }
+                            if (selectedEntity != null && selectedEntity.getIndex() == e.getIndex()) {
+                                return true;
+                            }
+                            if (!e.getName().toLowerCase().contains(filter.toLowerCase())) {
+                                return false;
+                            }
+                            return true;
+                        };
                     },
                     entityNameFilter.textProperty(), hideEmptySlots.selectedProperty()
                 ));
@@ -121,7 +163,7 @@ public class MainView implements Initializable {
         filteredPropertyList.bind(createObjectBinding(() -> {
                 var src = entityTable.getSelectionModel().selectedItemProperty().get();
                 if (src == null) return null;
-                var filteredList = new FilteredList<ObservableEntityProperty>(src);
+                var filteredList = new FilteredList<>(src);
                 filteredList.predicateProperty().bind(createObjectBinding(() -> {
                         var filter = propertyNameFilter.getText();
                         return oe ->
@@ -159,9 +201,83 @@ public class MainView implements Initializable {
         createTableCell(detailTable, "name", String.class, col ->
                 col.setCellValueFactory(f -> f.getValue().nameProperty())
         );
-        createTableCell(detailTable, "value", String.class, col -> {
-                    col.setCellValueFactory(f -> f.getValue().valueAsStringProperty());
-                    col.setCellFactory(v -> new EntityValueTableCell());
+        createTableCell(detailTable, "value", ObservableEntityProperty.class, col -> {
+                    col.setCellValueFactory(f -> new ReadOnlyObjectWrapper<>(f.getValue()));
+                    col.setCellFactory(v -> {
+                        var cell = new TableCell<ObservableEntityProperty, ObservableEntityProperty>();
+
+                        cell.textProperty().bind(cell.itemProperty().map(i -> i.getValueAsString()));
+
+//                        cell.graphicProperty().bind(cell.itemProperty()
+//                                .map(ObservableEntityProperty::getCellType)
+//                                .map(cellType -> {
+//                                    Labeled graphic = null;
+//                                    switch (cellType) {
+//                                        case HANDLE:
+//                                            var engineType = replayController.getEntityList().getEngineType();
+//                                            var handleProperty = cell.itemProperty()
+//                                                    .map(observableEntityProperty -> {
+//                                                        try {
+//                                                            return (Integer) observableEntityProperty.getValue();
+//                                                        } catch (Exception e) {
+//                                                            System.out.println("OOPS " + e.getMessage());
+//                                                            return engineType.emptyHandle();
+//                                                        }
+//                                                    });
+//                                            var isEmptyHandle = handleProperty.map(h -> engineType.emptyHandle() == h);
+//
+//                                            var link  = new Hyperlink();
+//                                            link.disableProperty().bind(isEmptyHandle);
+//                                            link.setOnAction(event -> {
+//                                                var entity = replayController.getEntityList().getByHandle(Integer.valueOf(link.getText()));
+//                                                if (entity != null) {
+//                                                    System.out.println("NAVIGATING " + link.getText());
+//                                                    entityTable.scrollTo(entity);
+//                                                    entityTable.getSelectionModel().select(entity);
+//                                                }
+//                                            });
+//                                            graphic = link;
+//                                            break;
+//                                        default:
+//                                            graphic = new Label();
+//                                    }
+//                                    graphic.setPadding(new Insets(0, 1, 0, 1));
+//                                    var valueAsStringProperty = cell.itemProperty().map(ObservableEntityProperty::getValueAsString);
+//                                    graphic.textProperty().bind(valueAsStringProperty);
+//                                    return graphic;
+//                                })
+//                        );
+
+                        Animation animation = new Transition() {
+                            {
+                                setCycleDuration(Duration.millis(500));
+                                setInterpolator(Interpolator.EASE_OUT);
+                            }
+
+                            @Override
+                            protected void interpolate(double frac) {
+                                var col = Color.YELLOW.interpolate(Color.WHITE, frac);
+                                cell.getTableRow().setStyle(String.format(
+                                        "-fx-control-inner-background: #%02X%02X%02X;",
+                                        (int) (col.getRed() * 255),
+                                        (int) (col.getGreen() * 255),
+                                        (int) (col.getBlue() * 255)
+                                ));
+                            }
+                        };
+
+                        cell.itemProperty().addListener((obs, oldVal, newVal) -> {
+                            animation.stop();
+                            var item = cell.getTableRow().getItem();
+                            if (item != null) {
+                                animation.playFrom(Duration.millis(System.currentTimeMillis() - item.getLastChangedAtMillis()));
+                            } else {
+                                cell.getTableRow().setStyle("");
+                            }
+                        });
+
+                        return cell;
+                    });
                 }
         );
         detailTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
@@ -204,6 +320,14 @@ public class MainView implements Initializable {
 
     public void clickPlay(ActionEvent actionEvent) {
         replayController.setPlaying(!replayController.isPlaying());
+    }
+
+    public void navigateBackward(ActionEvent actionEvent) {
+        System.out.println("NAVIGATE BACKWARD");
+    }
+
+    public void navigateForward(ActionEvent actionEvent) {
+        System.out.println("NAVIGATE FORWARD");
     }
 
     private void handleDetailTableKeyPressed(KeyEvent e) {

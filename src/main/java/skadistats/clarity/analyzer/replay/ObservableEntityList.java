@@ -36,6 +36,10 @@ public class ObservableEntityList extends ObservableListBase<ObservableEntity> {
         return entities[index];
     }
 
+    public ObservableEntity getByHandle(int handle) {
+        return entities[engineType.indexForHandle(handle)];
+    }
+
     @Override
     public int size() {
         return entities.length;
