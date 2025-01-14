@@ -23,6 +23,16 @@ repositories {
     mavenCentral()
 }
 
+tasks.withType<JavaCompile> {
+    options.encoding = "UTF-8"
+}
+
+tasks.withType<Javadoc> {
+    (options as StandardJavadocDocletOptions).encoding = "UTF-8"
+    (options as StandardJavadocDocletOptions).charSet = "UTF-8"
+    (options as StandardJavadocDocletOptions).locale = "en"
+}
+
 dependencies {
     implementation("com.skadistats:clarity:3.1.1")
     implementation("com.tobiasdiez:easybind:2.2")
