@@ -1,7 +1,21 @@
 package skadistats.clarity.analyzer.main;
 
+import static javafx.beans.binding.Bindings.createBooleanBinding;
+import static javafx.beans.binding.Bindings.createObjectBinding;
+import static javafx.beans.binding.Bindings.createStringBinding;
+import static javafx.beans.binding.Bindings.valueAt;
+
+import java.io.File;
+import java.util.Optional;
+import java.util.function.Consumer;
+import java.util.prefs.Preferences;
+import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tobiasdiez.easybind.EasyBind;
-import javafx.beans.binding.BooleanBinding;
+
 import javafx.beans.binding.ObjectBinding;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -11,12 +25,14 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.Label;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.Slider;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TextInputDialog;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.KeyCode;
@@ -24,25 +40,12 @@ import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.input.KeyEvent;
 import javafx.stage.FileChooser;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import skadistats.clarity.analyzer.Analyzer;
 import skadistats.clarity.analyzer.map.MapControl;
 import skadistats.clarity.analyzer.replay.ObservableEntity;
-import skadistats.clarity.analyzer.replay.ObservableEntityList;
 import skadistats.clarity.analyzer.replay.ObservableEntityProperty;
 import skadistats.clarity.analyzer.replay.ReplayController;
 import skadistats.clarity.analyzer.util.TickHelper;
-
-import java.io.File;
-import java.util.function.Consumer;
-import java.util.prefs.Preferences;
-import java.util.stream.Collectors;
-
-import static javafx.beans.binding.Bindings.createBooleanBinding;
-import static javafx.beans.binding.Bindings.createObjectBinding;
-import static javafx.beans.binding.Bindings.createStringBinding;
-import static javafx.beans.binding.Bindings.valueAt;
 
 public class MainView implements Initializable {
 
@@ -81,6 +84,9 @@ public class MainView implements Initializable {
     @FXML
     private MapControl mapControl;
 
+    @FXML
+    private MenuItem menuGoToTick;
+
     private Preferences preferences;
 
     private ReplayController replayController;
@@ -90,10 +96,13 @@ public class MainView implements Initializable {
     public void initialize(java.net.URL location, java.util.ResourceBundle resources) {
         preferences = Preferences.userNodeForPackage(this.getClass());
         replayController = new ReplayController(slider);
+        menuGoToTick.setDisable(true);
 
-        var runnerIsNull = createBooleanBinding(() -> replayController.getRunner() == null, replayController.runnerProperty());
+        var runnerIsNull = createBooleanBinding(() -> replayController.getRunner() == null,
+                replayController.runnerProperty());
         buttonPlay.disableProperty().bind(runnerIsNull);
-        buttonPlay.textProperty().bind(EasyBind.map(replayController.playingProperty(), playing -> playing ? "⏸" : "⏵"));
+        buttonPlay.textProperty()
+                .bind(EasyBind.map(replayController.playingProperty(), playing -> playing ? "⏸" : "⏵"));
         slider.disableProperty().bind(runnerIsNull);
 
         labelTick.textProperty().bind(replayController.tickProperty().asString());
@@ -101,69 +110,60 @@ public class MainView implements Initializable {
 
         // filtered entity list
         filteredEntityList.bind(createObjectBinding(() -> {
-                var src = replayController.getEntityList();
-                if (src == null) return null;
-                var filteredList = new FilteredList<ObservableEntity>(src);
-                filteredList.predicateProperty().bind(createObjectBinding(() -> {
-                        var filter = entityNameFilter.getText();
-                        return e ->
-                            (!hideEmptySlots.isSelected() || e.getDtClass() != null)
-                                && (filter.isEmpty() || e.getName().toLowerCase().contains(filter.toLowerCase()));
-                    },
-                    entityNameFilter.textProperty(), hideEmptySlots.selectedProperty()
-                ));
-                return filteredList;
+            var src = replayController.getEntityList();
+            if (src == null)
+                return null;
+            var filteredList = new FilteredList<ObservableEntity>(src);
+            filteredList.predicateProperty().bind(createObjectBinding(() -> {
+                var filter = entityNameFilter.getText();
+                return e -> (!hideEmptySlots.isSelected() || e.getDtClass() != null)
+                        && (filter.isEmpty() || e.getName().toLowerCase().contains(filter.toLowerCase()));
             },
-            replayController.entityListProperty()
-        ));
+                    entityNameFilter.textProperty(), hideEmptySlots.selectedProperty()));
+            return filteredList;
+        },
+                replayController.entityListProperty()));
 
         // filtered property list
         filteredPropertyList.bind(createObjectBinding(() -> {
-                var src = entityTable.getSelectionModel().selectedItemProperty().get();
-                if (src == null) return null;
-                var filteredList = new FilteredList<ObservableEntityProperty>(src);
-                filteredList.predicateProperty().bind(createObjectBinding(() -> {
-                        var filter = propertyNameFilter.getText();
-                        return oe ->
-                            (!onlyRecentlyUpdated.isSelected() || TickHelper.isRecent(oe.getLastChangedAtTick()))
-                                && (filter.isEmpty() || oe.getName().toLowerCase().contains(filter.toLowerCase()));
-                    },
-                    propertyNameFilter.textProperty(), onlyRecentlyUpdated.selectedProperty(), src.recentChangesHashProperty()
-                ));
-                return filteredList;
+            var src = entityTable.getSelectionModel().selectedItemProperty().get();
+            if (src == null)
+                return null;
+            var filteredList = new FilteredList<ObservableEntityProperty>(src);
+            filteredList.predicateProperty().bind(createObjectBinding(() -> {
+                var filter = propertyNameFilter.getText();
+                return oe -> (!onlyRecentlyUpdated.isSelected() || TickHelper.isRecent(oe.getLastChangedAtTick()))
+                        && (filter.isEmpty() || oe.getName().toLowerCase().contains(filter.toLowerCase()));
             },
-            entityTable.getSelectionModel().selectedItemProperty()
-        ));
+                    propertyNameFilter.textProperty(), onlyRecentlyUpdated.selectedProperty(),
+                    src.recentChangesHashProperty()));
+            return filteredList;
+        },
+                entityTable.getSelectionModel().selectedItemProperty()));
 
         entityTable.itemsProperty().bind(filteredEntityList);
         detailTable.itemsProperty().bind(filteredPropertyList);
 
         // entity table
-        createTableCell(entityTable, "#", String.class, col ->
-                col.setCellValueFactory(f -> f.getValue().indexProperty().asString())
-        );
-        createTableCell(entityTable, "class", String.class, col ->
-                col.setCellValueFactory(f -> {
-                    ObjectBinding<? extends ObservableEntity> src = valueAt(replayController.getEntityList(), f.getValue().getIndex());
-                    return createStringBinding(() -> src.get().getName(), src);
-                })
-        );
+        createTableCell(entityTable, "#", String.class,
+                col -> col.setCellValueFactory(f -> f.getValue().indexProperty().asString()));
+        createTableCell(entityTable, "class", String.class, col -> col.setCellValueFactory(f -> {
+            ObjectBinding<? extends ObservableEntity> src = valueAt(replayController.getEntityList(),
+                    f.getValue().getIndex());
+            return createStringBinding(() -> src.get().getName(), src);
+        }));
 
         // detail table
-        createTableCell(detailTable, "#", String.class, col ->
-                col.setCellValueFactory(f -> f.getValue().fieldPathProperty().asString())
-        );
-        createTableCell(detailTable, "type", String.class, col ->
-                col.setCellValueFactory(f -> f.getValue().typeProperty())
-        );
-        createTableCell(detailTable, "name", String.class, col ->
-                col.setCellValueFactory(f -> f.getValue().nameProperty())
-        );
+        createTableCell(detailTable, "#", String.class,
+                col -> col.setCellValueFactory(f -> f.getValue().fieldPathProperty().asString()));
+        createTableCell(detailTable, "type", String.class,
+                col -> col.setCellValueFactory(f -> f.getValue().typeProperty()));
+        createTableCell(detailTable, "name", String.class,
+                col -> col.setCellValueFactory(f -> f.getValue().nameProperty()));
         createTableCell(detailTable, "value", String.class, col -> {
-                    col.setCellValueFactory(f -> f.getValue().valueAsStringProperty());
-                    col.setCellFactory(v -> new EntityValueTableCell());
-                }
-        );
+            col.setCellValueFactory(f -> f.getValue().valueAsStringProperty());
+            col.setCellFactory(v -> new EntityValueTableCell());
+        });
         detailTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         detailTable.setOnKeyPressed(this::handleDetailTableKeyPressed);
 
@@ -171,7 +171,8 @@ public class MainView implements Initializable {
         mapControl.entityListProperty().bind(replayController.entityListProperty());
     }
 
-    private <S, V> void createTableCell(TableView<S> tableView, String header, Class<V> valueClass, Consumer<TableColumn<S, V>> columnInitializer) {
+    private <S, V> void createTableCell(TableView<S> tableView, String header, Class<V> valueClass,
+            Consumer<TableColumn<S, V>> columnInitializer) {
         var column = new TableColumn<S, V>(header);
         tableView.getColumns().add(column);
         columnInitializer.accept(column);
@@ -186,9 +187,8 @@ public class MainView implements Initializable {
         var fileChooser = new FileChooser();
         fileChooser.setTitle("Load a replay");
         fileChooser.getExtensionFilters().addAll(
-            new FileChooser.ExtensionFilter("Replay files", "*.dem"),
-            new FileChooser.ExtensionFilter("All files", "*")
-        );
+                new FileChooser.ExtensionFilter("Replay files", "*.dem"),
+                new FileChooser.ExtensionFilter("All files", "*"));
         var dir = new File(preferences.get("fileChooserPath", "."));
         if (!dir.isDirectory()) {
             dir = new File(".");
@@ -200,6 +200,38 @@ public class MainView implements Initializable {
         }
         preferences.put("fileChooserPath", replayFile.getParent());
         replayController.load(replayFile);
+        menuGoToTick.setDisable(false);
+    }
+
+    public void actionGoToTick(ActionEvent actionEvent) {
+        // Show an input dialog to ask for the tick number
+        TextInputDialog dialog = new TextInputDialog();
+        dialog.setTitle("Go to Tick");
+        dialog.setHeaderText("Enter the tick number");
+        dialog.setContentText("Tick:");
+
+        // Get the user's input
+        Optional<String> result = dialog.showAndWait();
+
+        result.ifPresent(input -> {
+            // Remove everything but digits
+            String sanitizedInput = input.replaceAll("\\D", "");
+            if (!sanitizedInput.isEmpty()) {
+                try {
+                    // Parse the sanitized input as an integer, defaulting to
+                    // the last tick if the input integer is too high
+                    int tickNumber = Math.min(
+                            Integer.parseInt(sanitizedInput),
+                            replayController.getRunner().getLastTick());
+                    System.out.println("Going to tick: " + tickNumber);
+                    replayController.getRunner().setDemandedTick(tickNumber);
+                } catch (NumberFormatException e) {
+                    System.err.println("Error: Could not parse tick number.");
+                }
+            } else {
+                System.err.println("No valid tick number entered.");
+            }
+        });
     }
 
     public void clickPlay(ActionEvent actionEvent) {
@@ -213,8 +245,7 @@ public class MainView implements Initializable {
             cbc.putString(detailTable.getSelectionModel().getSelectedIndices().stream()
                     .map(i -> detailTable.getItems().get(i))
                     .map(p -> String.format("%s %s %s", p.getFieldPath(), p.getName(), p.getValue()))
-                    .collect(Collectors.joining("\n"))
-            );
+                    .collect(Collectors.joining("\n")));
             Clipboard.getSystemClipboard().setContent(cbc);
         }
     }
