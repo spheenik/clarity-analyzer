@@ -1,7 +1,7 @@
 plugins {
     id("application")
     id("org.openjfx.javafxplugin") version "0.0.14"
-    id("io.freefair.lombok") version "8.0.1"
+    id("io.freefair.lombok") version "8.4"
     id("com.needhamsoftware.unojar") version "1.1.0"
 }
 
