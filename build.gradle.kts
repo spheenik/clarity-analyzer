@@ -1,6 +1,6 @@
 plugins {
     id("application")
-    id("org.openjfx.javafxplugin") version "0.0.14"
+    id("org.openjfx.javafxplugin") version "0.1.0"
     id("io.freefair.lombok") version "8.0.1"
     id("com.needhamsoftware.unojar") version "1.1.0"
 }
@@ -15,7 +15,7 @@ java {
 }
 
 javafx {
-    version = "20"
+    version = "21.0.7"
     modules("javafx.controls", "javafx.fxml")
 }
 
