@@ -109,6 +109,10 @@ public class MainView implements Initializable {
         preferences = Preferences.userNodeForPackage(this.getClass());
         replayController = new ReplayController(slider);
         navigationController = new NavigationController();
+        navigationController.setOnNavigate(entity -> {
+            entityTable.scrollTo(entity);
+            entityTable.getSelectionModel().select(entity);
+        });
 
         var runnerIsNull = createBooleanBinding(() -> replayController.getRunner() == null, replayController.runnerProperty());
         buttonPlay.disableProperty().bind(runnerIsNull);
@@ -118,15 +122,14 @@ public class MainView implements Initializable {
         buttonNavigateBackward.disableProperty().bind(navigationController.canNavigateBackwardProperty().not().or(runnerIsNull));
         buttonNavigateForward.disableProperty().bind(navigationController.canNavigateForwardProperty().not().or(runnerIsNull));
 
+        EasyBind.subscribe(replayController.entityListProperty(), navigationController::setEntityList);
+
         labelTick.textProperty().bind(replayController.tickProperty().asString());
         labelLastTick.textProperty().bind(replayController.lastTickProperty().asString());
 
         EasyBind.subscribe(
                 entityTable.getSelectionModel().selectedItemProperty(),
-                e -> {
-                    System.out.println("SELECTED " + e);
-                    selectedEntity = e;
-                }
+                e -> selectedEntity = e
         );
 
         // filtered entity list
@@ -206,47 +209,39 @@ public class MainView implements Initializable {
                     col.setCellFactory(v -> {
                         var cell = new TableCell<ObservableEntityProperty, ObservableEntityProperty>();
 
-                        cell.textProperty().bind(cell.itemProperty().map(i -> i.getValueAsString()));
+                        cell.graphicProperty().bind(cell.itemProperty()
+                                .map(ObservableEntityProperty::getCellType)
+                                .map(cellType -> {
+                                    Labeled graphic;
+                                    if (cellType == ObservableEntityCellType.HANDLE) {
+                                        var engineType = replayController.getEntityList().getEngineType();
+                                        var handleProperty = cell.itemProperty()
+                                                .map(p -> {
+                                                    try {
+                                                        return (Integer) p.getValue();
+                                                    } catch (Exception e) {
+                                                        return engineType.emptyHandle();
+                                                    }
+                                                });
+                                        var isEmptyHandle = handleProperty.map(h -> engineType.emptyHandle() == h);
 
-//                        cell.graphicProperty().bind(cell.itemProperty()
-//                                .map(ObservableEntityProperty::getCellType)
-//                                .map(cellType -> {
-//                                    Labeled graphic = null;
-//                                    switch (cellType) {
-//                                        case HANDLE:
-//                                            var engineType = replayController.getEntityList().getEngineType();
-//                                            var handleProperty = cell.itemProperty()
-//                                                    .map(observableEntityProperty -> {
-//                                                        try {
-//                                                            return (Integer) observableEntityProperty.getValue();
-//                                                        } catch (Exception e) {
-//                                                            System.out.println("OOPS " + e.getMessage());
-//                                                            return engineType.emptyHandle();
-//                                                        }
-//                                                    });
-//                                            var isEmptyHandle = handleProperty.map(h -> engineType.emptyHandle() == h);
-//
-//                                            var link  = new Hyperlink();
-//                                            link.disableProperty().bind(isEmptyHandle);
-//                                            link.setOnAction(event -> {
-//                                                var entity = replayController.getEntityList().getByHandle(Integer.valueOf(link.getText()));
-//                                                if (entity != null) {
-//                                                    System.out.println("NAVIGATING " + link.getText());
-//                                                    entityTable.scrollTo(entity);
-//                                                    entityTable.getSelectionModel().select(entity);
-//                                                }
-//                                            });
-//                                            graphic = link;
-//                                            break;
-//                                        default:
-//                                            graphic = new Label();
-//                                    }
-//                                    graphic.setPadding(new Insets(0, 1, 0, 1));
-//                                    var valueAsStringProperty = cell.itemProperty().map(ObservableEntityProperty::getValueAsString);
-//                                    graphic.textProperty().bind(valueAsStringProperty);
-//                                    return graphic;
-//                                })
-//                        );
+                                        var link = new Hyperlink();
+                                        link.disableProperty().bind(isEmptyHandle);
+                                        link.setOnAction(event -> {
+                                            var handle = handleProperty.getValue();
+                                            if (handle != null && handle != engineType.emptyHandle()) {
+                                                navigationController.navigateTo(handle);
+                                            }
+                                        });
+                                        graphic = link;
+                                    } else {
+                                        graphic = new Label();
+                                    }
+                                    graphic.setPadding(new Insets(0, 1, 0, 1));
+                                    graphic.textProperty().bind(cell.itemProperty().map(ObservableEntityProperty::getValueAsString));
+                                    return graphic;
+                                })
+                        );
 
                         Animation animation = new Transition() {
                             {
@@ -323,11 +318,11 @@ public class MainView implements Initializable {
     }
 
     public void navigateBackward(ActionEvent actionEvent) {
-        System.out.println("NAVIGATE BACKWARD");
+        navigationController.navigateBackward();
     }
 
     public void navigateForward(ActionEvent actionEvent) {
-        System.out.println("NAVIGATE FORWARD");
+        navigationController.navigateForward();
     }
 
     private void handleDetailTableKeyPressed(KeyEvent e) {
