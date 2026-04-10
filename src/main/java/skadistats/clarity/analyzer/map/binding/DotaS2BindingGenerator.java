@@ -4,7 +4,7 @@ import skadistats.clarity.analyzer.map.icon.DefaultIcon;
 import skadistats.clarity.analyzer.map.icon.EntityIcon;
 import skadistats.clarity.analyzer.map.icon.dota.BuildingIcon;
 import skadistats.clarity.analyzer.map.icon.dota.CameraIcon;
-import skadistats.clarity.analyzer.map.icon.dota.HeroIcon;
+import skadistats.clarity.analyzer.map.icon.dota.PointingHeroIcon;
 import skadistats.clarity.analyzer.map.position.DOTAS2PositionBinder;
 import skadistats.clarity.analyzer.map.position.PositionBinder;
 import skadistats.clarity.analyzer.replay.ObservableEntity;
@@ -32,7 +32,7 @@ public class DotaS2BindingGenerator implements BindingGenerator {
         } else if (name.equals("CDOTA_BaseNPC_Fort")) {
             return new BuildingIcon(PB_STANDARD, oe, 300);
         } else if (name.startsWith("CDOTA_Unit_Hero_")) {
-            return new HeroIcon(PB_STANDARD, oe);
+            return new PointingHeroIcon(PB_STANDARD, oe);
         } else if (PB_STANDARD.hasPosition(oe)) {
             return new DefaultIcon(PB_STANDARD, oe);
         }

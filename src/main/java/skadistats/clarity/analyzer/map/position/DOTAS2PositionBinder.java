@@ -3,10 +3,11 @@ package skadistats.clarity.analyzer.map.position;
 import javafx.beans.value.ObservableValue;
 import com.tobiasdiez.easybind.EasyBind;
 import skadistats.clarity.analyzer.replay.ObservableEntity;
-
-import static javafx.beans.binding.Bindings.createObjectBinding;
+import skadistats.clarity.model.Vector;
 
 public class DOTAS2PositionBinder implements PositionBinder {
+
+    private static final Vector ZERO = new Vector(0.0f, 0.0f, 0.0f);
 
     @Override
     public boolean hasPosition(ObservableEntity oe) {
@@ -33,7 +34,8 @@ public class DOTAS2PositionBinder implements PositionBinder {
 
     @Override
     public ObservableValue<Float> getRotation(ObservableEntity oe) {
-        return createObjectBinding(() -> 0.0f);
+        return EasyBind.wrap(oe.getPropertyBinding(Vector.class, "CBodyComponent.m_angRotation", ZERO))
+                .map(v -> 90 - v.getElement(1));
     }
 
 }
