@@ -1,5 +1,6 @@
 package skadistats.clarity.analyzer.map.icon.dota;
 
+import javafx.beans.binding.IntegerBinding;
 import javafx.scene.shape.Polygon;
 import skadistats.clarity.analyzer.map.icon.EntityIcon;
 import skadistats.clarity.analyzer.map.position.PositionBinder;
@@ -11,14 +12,14 @@ public class PointingHeroIcon extends EntityIcon<Polygon> {
 
     private final Polygon shape;
 
-    public PointingHeroIcon(PositionBinder pb, ObservableEntity oe) {
+    public PointingHeroIcon(PositionBinder pb, ObservableEntity oe, IntegerBinding playerSlot) {
         super(pb, oe);
 
         shape = new Polygon(
             0, -200, -120, 200, 120, 200
         );
 
-        shape.fillProperty().bind(getPlayerColor());
+        shape.fillProperty().bind(getPlayerColorForSlot(playerSlot));
 
         shape.translateXProperty().bind(getMapX());
         shape.translateYProperty().bind(getMapY());

@@ -82,14 +82,33 @@ public abstract class EntityIcon<T extends Shape> {
 
     protected ObjectBinding<Paint> getPlayerColor() {
         var playerId = getPlayerId();
+        return getPlayerColorForSlot(playerId);
+    }
+
+    protected ObjectBinding<Paint> getPlayerColorForSlot(IntegerBinding slot) {
         return Bindings.createObjectBinding(() -> {
-            var n = playerId.get();
+            var n = slot.get();
             if (n < 0 || n > 9) {
                 return Color.WHITE;
             } else {
                 return PLAYER_COLORS[n];
             }
-        }, playerId);
+        }, slot);
+    }
+
+    protected ObjectBinding<Paint> getPlayerColorOrTeamColor(IntegerBinding playerSlot) {
+        var teamNum = getTeamNum();
+        return Bindings.createObjectBinding(() -> {
+            var slot = playerSlot.get();
+            if (slot >= 0 && slot <= 9) {
+                return PLAYER_COLORS[slot];
+            }
+            return switch (teamNum.get()) {
+                case 2 -> Color.GREEN;
+                case 3 -> Color.RED;
+                default -> Color.GRAY;
+            };
+        }, playerSlot, teamNum);
     }
 
 }
