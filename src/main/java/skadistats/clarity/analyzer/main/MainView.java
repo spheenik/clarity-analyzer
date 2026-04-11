@@ -24,6 +24,7 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.layout.GridPane;
 import javafx.scene.paint.Color;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.FileChooser;
@@ -55,6 +56,9 @@ import static javafx.beans.binding.Bindings.valueAt;
 public class MainView implements Initializable {
 
     protected final Logger log = LoggerFactory.getLogger(getClass());
+
+    @FXML
+    public GridPane rootPane;
 
     @FXML
     public Button buttonPlay;
@@ -314,6 +318,25 @@ public class MainView implements Initializable {
 
         // map control
         mapControl.entityListProperty().bind(replayController.entityListProperty());
+
+        // keyboard shortcuts (LEFT/RIGHT for entity history navigation, SPACE for play/pause)
+        rootPane.addEventFilter(KeyEvent.KEY_PRESSED, e -> {
+            if (e.getTarget() instanceof TextField) return;
+            switch (e.getCode()) {
+                case LEFT -> {
+                    if (!buttonNavigateBackward.isDisabled()) navigationController.navigateBackward();
+                    e.consume();
+                }
+                case RIGHT -> {
+                    if (!buttonNavigateForward.isDisabled()) navigationController.navigateForward();
+                    e.consume();
+                }
+                case SPACE -> {
+                    if (!buttonPlay.isDisabled()) replayController.setPlaying(!replayController.isPlaying());
+                    e.consume();
+                }
+            }
+        });
     }
 
     private <S, V> void createTableCell(TableView<S> tableView, String header, Class<V> valueClass, Consumer<TableColumn<S, V>> columnInitializer) {
