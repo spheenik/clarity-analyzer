@@ -6,7 +6,11 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
+import skadistats.clarity.analyzer.main.MainView;
 import skadistats.clarity.analyzer.util.FXResources;
+
+import java.io.File;
+import java.util.List;
 
 public class Analyzer extends Application {
 
@@ -26,6 +30,12 @@ public class Analyzer extends Application {
 
         primaryStage.setScene(mainScene);
         primaryStage.show();
+
+        List<String> args = getParameters().getRaw();
+        if (!args.isEmpty()) {
+            MainView controller = fxmlLoader.getController();
+            controller.load(new File(args.get(0)));
+        }
     }
 
     public static void main(String[] args) {

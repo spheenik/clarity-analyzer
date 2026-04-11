@@ -309,6 +309,10 @@ public class MainView implements Initializable {
         if (replayFile == null) {
             return;
         }
+        load(replayFile);
+    }
+
+    public void load(File replayFile) {
         preferences.put("fileChooserPath", replayFile.getParent());
         replayController.load(replayFile);
     }
