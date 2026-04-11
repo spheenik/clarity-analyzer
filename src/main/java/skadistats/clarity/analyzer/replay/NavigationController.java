@@ -50,6 +50,22 @@ public class NavigationController {
         selectCurrent();
     }
 
+    public void recordSelection(ObservableEntity entity) {
+        if (entity == null || entity.getDtClass() == null || entityList == null) return;
+        var handle = entityList.getEngineType().handleForIndexAndSerial(
+                entity.getIndex(), entity.getSerial()
+        );
+        // truncate forward history
+        if (idx.get() + 1 < handles.size()) {
+            handles.subList(idx.get() + 1, handles.size()).clear();
+        }
+        // avoid duplicates
+        if (handles.isEmpty() || !handles.get(handles.size() - 1).equals(handle)) {
+            handles.add(handle);
+            idx.set(handles.size() - 1);
+        }
+    }
+
     public void navigateBackward() {
         for (int i = idx.get() - 1; i >= 0; i--) {
             var entity = resolve(handles.get(i));

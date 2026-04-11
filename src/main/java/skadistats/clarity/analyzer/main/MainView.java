@@ -100,7 +100,8 @@ public class MainView implements Initializable {
     private ReplayController replayController;
     private NavigationController navigationController;
 
-    private ObservableEntity selectedEntity;
+    private int keptEntityIndex = -1;
+    private boolean navigating;
 
     private final ObjectProperty<FilteredList<ObservableEntity>> filteredEntityList = new SimpleObjectProperty<>();
     private final ObjectProperty<FilteredList<ObservableEntityProperty>> filteredPropertyList = new SimpleObjectProperty<>();
@@ -110,9 +111,27 @@ public class MainView implements Initializable {
         replayController = new ReplayController(slider);
         navigationController = new NavigationController();
         navigationController.setOnNavigate(entity -> {
-            entityTable.scrollTo(entity);
-            entityTable.getSelectionModel().select(entity);
+            navigating = true;
+            try {
+                var savedFilter = entityNameFilter.getText();
+                entityNameFilter.setText("");
+                entityTable.getSelectionModel().select(entity);
+                entityNameFilter.setText(savedFilter);
+                entityTable.scrollTo(entity);
+            } finally {
+                navigating = false;
+            }
         });
+
+        EasyBind.subscribe(
+                entityTable.getSelectionModel().selectedItemProperty(),
+                e -> {
+                    keptEntityIndex = (e != null) ? e.getIndex() : -1;
+                    if (!navigating && e != null && e.getDtClass() != null) {
+                        navigationController.recordSelection(e);
+                    }
+                }
+        );
 
         var runnerIsNull = createBooleanBinding(() -> replayController.getRunner() == null, replayController.runnerProperty());
         buttonPlay.disableProperty().bind(runnerIsNull);
@@ -127,11 +146,6 @@ public class MainView implements Initializable {
         labelTick.textProperty().bind(replayController.tickProperty().asString());
         labelLastTick.textProperty().bind(replayController.lastTickProperty().asString());
 
-        EasyBind.subscribe(
-                entityTable.getSelectionModel().selectedItemProperty(),
-                e -> selectedEntity = e
-        );
-
         // filtered entity list
         filteredEntityList.bind(createObjectBinding(() -> {
                 var src = replayController.getEntityList();
@@ -139,14 +153,15 @@ public class MainView implements Initializable {
                 var filteredList = new FilteredList<>(src);
                 filteredList.predicateProperty().bind(createObjectBinding(() -> {
                         var filter = entityNameFilter.getText();
+                        var kept = keptEntityIndex;
                         return e -> {
                             if (hideEmptySlots.isSelected() && e.getDtClass() == null) {
                                 return false;
                             }
-                            if (filter.isEmpty()) {
+                            if (e.getIndex() == kept) {
                                 return true;
                             }
-                            if (selectedEntity != null && selectedEntity.getIndex() == e.getIndex()) {
+                            if (filter.isEmpty()) {
                                 return true;
                             }
                             if (!e.getName().toLowerCase().contains(filter.toLowerCase())) {
@@ -187,12 +202,30 @@ public class MainView implements Initializable {
         createTableCell(entityTable, "#", String.class, col ->
                 col.setCellValueFactory(f -> f.getValue().indexProperty().asString())
         );
-        createTableCell(entityTable, "class", String.class, col ->
+        createTableCell(entityTable, "class", String.class, col -> {
                 col.setCellValueFactory(f -> {
                     ObjectBinding<? extends ObservableEntity> src = valueAt(replayController.getEntityList(), f.getValue().getIndex());
                     return createStringBinding(() -> src.get().getName(), src);
-                })
-        );
+                });
+                col.setCellFactory(c -> new TableCell<>() {
+                    @Override
+                    protected void updateItem(String item, boolean empty) {
+                        super.updateItem(item, empty);
+                        if (empty || item == null) {
+                            setText(null);
+                            setStyle("");
+                        } else {
+                            setText(item);
+                            var filter = entityNameFilter.getText();
+                            if (!filter.isEmpty() && !item.toLowerCase().contains(filter.toLowerCase())) {
+                                setStyle("-fx-font-style: italic;");
+                            } else {
+                                setStyle("");
+                            }
+                        }
+                    }
+                });
+        });
 
         // detail table
         createTableCell(detailTable, "#", String.class, col ->
@@ -231,6 +264,7 @@ public class MainView implements Initializable {
                                             var handle = handleProperty.getValue();
                                             if (handle != null && handle != engineType.emptyHandle()) {
                                                 navigationController.navigateTo(handle);
+
                                             }
                                         });
                                         graphic = link;
