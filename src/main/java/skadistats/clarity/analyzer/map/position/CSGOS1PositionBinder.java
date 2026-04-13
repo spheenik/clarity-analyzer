@@ -21,7 +21,7 @@ public class CSGOS1PositionBinder implements PositionBinder {
 
     @Override
     public boolean hasPosition(ObservableEntity oe) {
-        return oe.getDtClass().getFieldPathForName(prefix  + "cslocaldata.m_vecOrigin")  != null;
+        return oe.getFieldPathForName(prefix  + "cslocaldata.m_vecOrigin")  != null;
     }
 
     @Override

@@ -1,7 +1,7 @@
 package skadistats.clarity.analyzer.map.position;
 
-import javafx.beans.value.ObservableValue;
 import com.tobiasdiez.easybind.EasyBind;
+import javafx.beans.value.ObservableValue;
 import skadistats.clarity.analyzer.replay.ObservableEntity;
 import skadistats.clarity.model.Vector;
 
@@ -11,7 +11,7 @@ public class DOTAS2PositionBinder implements PositionBinder {
 
     @Override
     public boolean hasPosition(ObservableEntity oe) {
-        return oe.getDtClass().getFieldPathForName("CBodyComponent.m_cellX")  != null;
+        return oe.getFieldPathForName("CBodyComponent.m_cellX")  != null;
     }
 
     @Override

@@ -14,11 +14,12 @@ import javafx.beans.value.ObservableValueBase;
 import javafx.collections.ObservableListBase;
 import lombok.extern.slf4j.Slf4j;
 import skadistats.clarity.analyzer.util.TickHelper;
+import skadistats.clarity.io.s1.S1DTClass;
 import skadistats.clarity.io.s2.FieldType;
-import skadistats.clarity.io.s2.S2DTClass;
 import skadistats.clarity.model.DTClass;
 import skadistats.clarity.model.FieldPath;
 import skadistats.clarity.model.s1.PropType;
+import skadistats.clarity.model.state.AbstractS2EntityState;
 import skadistats.clarity.model.state.EntityState;
 import skadistats.clarity.util.FieldPathUtil;
 import skadistats.clarity.util.StateDifferenceEvaluator;
@@ -76,8 +77,22 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
     }
 
 
+    public String getNameForFieldPath(FieldPath fp) {
+        if (state instanceof AbstractS2EntityState s2s) {
+            return s2s.getNameForFieldPath(fp);
+        }
+        return ((S1DTClass) dtClass).getNameForFieldPath(fp);
+    }
+
+    public FieldPath getFieldPathForName(String name) {
+        if (state instanceof AbstractS2EntityState s2s) {
+            return s2s.getFieldPathForName(name);
+        }
+        return ((S1DTClass) dtClass).getFieldPathForName(name);
+    }
+
     private ObservableEntityProperty createProperty(FieldPath fp) {
-        var propName = dtClass.getNameForFieldPath(fp);
+        var propName = getNameForFieldPath(fp);
         record TypeInfo(String typeName, ObservableEntityCellType cellType) {}
         var typeInfo = dtClass.evaluate(
                 s1 -> {
@@ -88,7 +103,8 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
                     );
                 },
                 s2 -> {
-                    var fieldType = s2.getTypeForFieldPath(fp.s2());
+                    var s2state = (AbstractS2EntityState) state;
+                    var fieldType = s2state.getTypeForFieldPath(fp.s2());
                     return new TypeInfo(
                             fieldType.toString(),
                             cellTypeForS2(propName, fieldType)
@@ -133,7 +149,7 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
             var idx = Collections.binarySearch(properties, fp);
             if (idx < 0) {
                 // we can assume the field path to not be found only for Source 2
-                var field = ((S2DTClass) dtClass).getFieldForFieldPath(fp.s2());
+                var field = ((AbstractS2EntityState) state).getFieldForFieldPath(fp.s2());
                 if (!field.isHiddenFieldPath()) {
                     log.warn("property at fieldpath {} for entity {} ({}) not found for update", fp, getName(), getIndex());
                 }
@@ -278,7 +294,7 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
     }
 
     public <T> ObservableValue<T> getPropertyBinding(Class<T> propertyClass, String name, T defaultValue) {
-        var fp = getDtClass().getFieldPathForName(name);
+        var fp = getFieldPathForName(name);
         if (fp == null) {
             return new ObservableValueBase<>() {
                 @Override

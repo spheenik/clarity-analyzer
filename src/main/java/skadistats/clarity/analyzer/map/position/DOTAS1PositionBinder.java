@@ -23,7 +23,7 @@ public class DOTAS1PositionBinder implements PositionBinder {
 
     @Override
     public boolean hasPosition(ObservableEntity oe) {
-        return oe.getDtClass().getFieldPathForName(prefix  + "m_cellX")  != null;
+        return oe.getFieldPathForName(prefix  + "m_cellX")  != null;
     }
 
     @Override
