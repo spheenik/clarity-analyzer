@@ -19,8 +19,8 @@ import skadistats.clarity.io.s2.FieldType;
 import skadistats.clarity.model.DTClass;
 import skadistats.clarity.model.FieldPath;
 import skadistats.clarity.model.s1.PropType;
-import skadistats.clarity.model.state.AbstractS2EntityState;
 import skadistats.clarity.model.state.EntityState;
+import skadistats.clarity.model.state.S2AbstractEntityState;
 import skadistats.clarity.util.FieldPathUtil;
 import skadistats.clarity.util.StateDifferenceEvaluator;
 
@@ -78,14 +78,14 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
 
 
     public String getNameForFieldPath(FieldPath fp) {
-        if (state instanceof AbstractS2EntityState s2s) {
+        if (state instanceof S2AbstractEntityState s2s) {
             return s2s.getNameForFieldPath(fp);
         }
         return ((S1DTClass) dtClass).getNameForFieldPath(fp);
     }
 
     public FieldPath getFieldPathForName(String name) {
-        if (state instanceof AbstractS2EntityState s2s) {
+        if (state instanceof S2AbstractEntityState s2s) {
             return s2s.getFieldPathForName(name);
         }
         return ((S1DTClass) dtClass).getFieldPathForName(name);
@@ -103,7 +103,7 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
                     );
                 },
                 s2 -> {
-                    var s2state = (AbstractS2EntityState) state;
+                    var s2state = (S2AbstractEntityState) state;
                     var fieldType = s2state.getTypeForFieldPath(fp.s2());
                     return new TypeInfo(
                             fieldType.toString(),
@@ -149,7 +149,7 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
             var idx = Collections.binarySearch(properties, fp);
             if (idx < 0) {
                 // we can assume the field path to not be found only for Source 2
-                var field = ((AbstractS2EntityState) state).getFieldForFieldPath(fp.s2());
+                var field = ((S2AbstractEntityState) state).getFieldForFieldPath(fp.s2());
                 if (!field.isHiddenFieldPath()) {
                     log.warn("property at fieldpath {} for entity {} ({}) not found for update", fp, getName(), getIndex());
                 }
