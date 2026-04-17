@@ -14,7 +14,7 @@ import skadistats.clarity.analyzer.map.position.DOTAS2PositionBinder;
 import skadistats.clarity.analyzer.map.position.PositionBinder;
 import skadistats.clarity.analyzer.replay.ObservableEntity;
 import skadistats.clarity.analyzer.replay.ObservableEntityList;
-import skadistats.clarity.model.EngineType;
+import skadistats.clarity.engine.EngineType;
 
 public class DotaS2BindingGenerator implements BindingGenerator {
 

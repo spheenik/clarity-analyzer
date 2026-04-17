@@ -1,6 +1,6 @@
 package skadistats.clarity.analyzer.util;
 
-import skadistats.clarity.model.EngineType;
+import skadistats.clarity.engine.EngineType;
 
 public class TickHelper {
 

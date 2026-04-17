@@ -1,7 +1,6 @@
 package skadistats.clarity.analyzer.main;
 
 import com.tobiasdiez.easybind.EasyBind;
-import com.tobiasdiez.easybind.optional.OptionalBinding;
 import javafx.animation.Animation;
 import javafx.animation.Interpolator;
 import javafx.animation.Transition;
@@ -9,12 +8,10 @@ import javafx.beans.binding.ObjectBinding;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
@@ -27,7 +24,6 @@ import javafx.scene.input.KeyCombination;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.paint.Color;
-import javafx.scene.text.TextAlignment;
 import javafx.stage.FileChooser;
 import javafx.util.Duration;
 import org.slf4j.Logger;
@@ -40,12 +36,9 @@ import skadistats.clarity.analyzer.replay.ObservableEntityCellType;
 import skadistats.clarity.analyzer.replay.ObservableEntityProperty;
 import skadistats.clarity.analyzer.replay.ReplayController;
 import skadistats.clarity.analyzer.util.TickHelper;
-import skadistats.clarity.model.EngineType;
 
 import java.io.File;
-import java.util.Optional;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.prefs.Preferences;
 import java.util.stream.Collectors;
 

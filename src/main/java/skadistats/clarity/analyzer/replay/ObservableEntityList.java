@@ -2,12 +2,10 @@ package skadistats.clarity.analyzer.replay;
 
 import javafx.collections.ObservableListBase;
 import skadistats.clarity.analyzer.util.PendingActionList;
+import skadistats.clarity.engine.EngineType;
 import skadistats.clarity.event.Insert;
-import skadistats.clarity.model.DTClass;
-import skadistats.clarity.model.EngineType;
 import skadistats.clarity.model.Entity;
 import skadistats.clarity.model.FieldPath;
-import skadistats.clarity.model.state.EntityState;
 import skadistats.clarity.processor.entities.OnEntityCreated;
 import skadistats.clarity.processor.entities.OnEntityDeleted;
 import skadistats.clarity.processor.entities.OnEntityPropertyCountChanged;
