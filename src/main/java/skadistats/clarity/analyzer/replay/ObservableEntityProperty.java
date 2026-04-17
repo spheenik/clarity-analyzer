@@ -36,11 +36,6 @@ public class ObservableEntityProperty implements Comparable<FieldPath> {
             protected Object computeValue() {
                 return valueSupplier.get();
             }
-            @Override
-            protected void onInvalidating() {
-                lastChangedAtTick = TickHelper.currentTick;
-                lastChangedAtMillis = System.currentTimeMillis();
-            }
         };
         this.valueAsString = createStringBinding(
                 () -> {
@@ -56,6 +51,11 @@ public class ObservableEntityProperty implements Comparable<FieldPath> {
                 this.value
         );
         this.lastChangedAtTick = TickHelper.currentTick;
+    }
+
+    void markChanged() {
+        lastChangedAtTick = TickHelper.currentTick;
+        lastChangedAtMillis = System.currentTimeMillis();
     }
 
     public FieldPath getFieldPath() {

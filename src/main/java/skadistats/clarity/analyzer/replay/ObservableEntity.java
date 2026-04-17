@@ -153,6 +153,7 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
                 continue;
             }
             var property = properties.get(idx);
+            property.markChanged();
             property.valueProperty().invalidate();
             recentChanges.add(fp);
         }
