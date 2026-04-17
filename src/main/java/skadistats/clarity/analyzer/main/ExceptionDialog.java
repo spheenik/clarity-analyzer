@@ -11,9 +11,9 @@ import java.io.StringWriter;
 
 public class ExceptionDialog {
 
-    private final Exception e;
+    private final Throwable e;
 
-    public ExceptionDialog(Exception e) {
+    public ExceptionDialog(Throwable e) {
         this.e = e;
     }
 

@@ -119,6 +119,10 @@ public class ReplayController {
             TickHelper.engineType = r.getEngineType();
             var observableEntities = new ObservableEntityList(r.getEngineType());
             runner.setValue(r);
+            r.setOnException(t -> Platform.runLater(() -> {
+                setPlaying(false);
+                new ExceptionDialog(t).show();
+            }));
             r.runWith(this, observableEntities);
             entityList.set(observableEntities);
         } catch (Exception e) {
