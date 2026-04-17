@@ -253,9 +253,10 @@ public class MainView implements Initializable {
                                     if (cellType == ObservableEntityCellType.HANDLE) {
                                         var engineType = replayController.getEntityList().getEngineType();
                                         var handleProperty = cell.itemProperty()
-                                                .map(p -> {
+                                                .flatMap(ObservableEntityProperty::valueProperty)
+                                                .map(value -> {
                                                     try {
-                                                        return (Integer) p.getValue();
+                                                        return (Integer) value;
                                                     } catch (Exception e) {
                                                         return engineType.emptyHandle();
                                                     }
@@ -276,7 +277,7 @@ public class MainView implements Initializable {
                                         graphic = new Label();
                                     }
                                     graphic.setPadding(new Insets(0, 1, 0, 1));
-                                    graphic.textProperty().bind(cell.itemProperty().map(ObservableEntityProperty::getValueAsString));
+                                    graphic.textProperty().bind(cell.itemProperty().flatMap(ObservableEntityProperty::valueAsStringProperty));
                                     return graphic;
                                 })
                         );
@@ -299,15 +300,17 @@ public class MainView implements Initializable {
                             }
                         };
 
-                        cell.itemProperty().addListener((obs, oldVal, newVal) -> {
-                            animation.stop();
-                            var item = cell.getTableRow().getItem();
-                            if (item != null) {
-                                animation.playFrom(Duration.millis(System.currentTimeMillis() - item.getLastChangedAtMillis()));
-                            } else {
-                                cell.getTableRow().setStyle("");
-                            }
-                        });
+                        cell.itemProperty()
+                                .flatMap(ObservableEntityProperty::valueProperty)
+                                .addListener((obs, oldVal, newVal) -> {
+                                    animation.stop();
+                                    var item = cell.getItem();
+                                    if (item != null) {
+                                        animation.playFrom(Duration.millis(System.currentTimeMillis() - item.getLastChangedAtMillis()));
+                                    } else if (cell.getTableRow() != null) {
+                                        cell.getTableRow().setStyle("");
+                                    }
+                                });
 
                         return cell;
                     });
