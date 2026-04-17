@@ -16,11 +16,14 @@ import lombok.extern.slf4j.Slf4j;
 import skadistats.clarity.analyzer.util.TickHelper;
 import skadistats.clarity.io.s1.S1DTClass;
 import skadistats.clarity.io.s2.FieldType;
+import skadistats.clarity.io.s2.S2DTClass;
 import skadistats.clarity.model.DTClass;
 import skadistats.clarity.model.FieldPath;
 import skadistats.clarity.model.s1.PropType;
+import skadistats.clarity.model.s1.S1FieldPath;
+import skadistats.clarity.model.s2.S2FieldPath;
 import skadistats.clarity.model.state.EntityState;
-import skadistats.clarity.model.state.S2AbstractEntityState;
+import skadistats.clarity.model.state.S2EntityState;
 import skadistats.clarity.util.FieldPathUtil;
 import skadistats.clarity.util.StateDifferenceEvaluator;
 
@@ -78,45 +81,39 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
 
 
     public String getNameForFieldPath(FieldPath fp) {
-        if (state instanceof S2AbstractEntityState s2s) {
-            return s2s.getNameForFieldPath(fp);
-        }
-        return ((S1DTClass) dtClass).getNameForFieldPath(fp);
+        return DTClass.getNameForFieldPath(dtClass, state, fp);
     }
 
     public FieldPath getFieldPathForName(String name) {
-        if (state instanceof S2AbstractEntityState s2s) {
-            return s2s.getFieldPathForName(name);
-        }
-        return ((S1DTClass) dtClass).getFieldPathForName(name);
+        return DTClass.getFieldPathForName(dtClass, state, name);
     }
 
     private ObservableEntityProperty createProperty(FieldPath fp) {
         var propName = getNameForFieldPath(fp);
         record TypeInfo(String typeName, ObservableEntityCellType cellType) {}
-        var typeInfo = dtClass.evaluate(
-                s1 -> {
-                    var propType = s1.getReceiveProps()[fp.s1().idx()].getSendProp().getType();
-                    return new TypeInfo(
-                            propType.toString(),
-                            cellTypeForS1(propName, propType)
-                    );
-                },
-                s2 -> {
-                    var s2state = (S2AbstractEntityState) state;
-                    var fieldType = s2state.getTypeForFieldPath(fp.s2());
-                    return new TypeInfo(
-                            fieldType.toString(),
-                            cellTypeForS2(propName, fieldType)
-                    );
-                }
-        );
+        var typeInfo = switch (dtClass) {
+            case S1DTClass s1 -> {
+                var propType = s1.getReceiveProps()[((S1FieldPath) fp).idx()].getSendProp().getType();
+                yield new TypeInfo(
+                        propType.toString(),
+                        cellTypeForS1(propName, propType)
+                );
+            }
+            case S2DTClass ignored -> {
+                var s2state = (S2EntityState) state;
+                var fieldType = s2state.getTypeForFieldPath((S2FieldPath) fp);
+                yield new TypeInfo(
+                        fieldType.toString(),
+                        cellTypeForS2(propName, fieldType)
+                );
+            }
+        };
         var property = new ObservableEntityProperty(
                 fp,
                 typeInfo.cellType,
                 typeInfo.typeName,
                 propName,
-                () -> ObservableEntity.this.state.getValueForFieldPath(fp)
+                () -> EntityState.getValueForFieldPath(ObservableEntity.this.state, fp)
         );
         return property;
     }
@@ -149,7 +146,7 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
             var idx = Collections.binarySearch(properties, fp);
             if (idx < 0) {
                 // we can assume the field path to not be found only for Source 2
-                var field = ((S2AbstractEntityState) state).getFieldForFieldPath(fp.s2());
+                var field = ((S2EntityState) state).getFieldForFieldPath((S2FieldPath) fp);
                 if (!field.isHiddenFieldPath()) {
                     log.warn("property at fieldpath {} for entity {} ({}) not found for update", fp, getName(), getIndex());
                 }

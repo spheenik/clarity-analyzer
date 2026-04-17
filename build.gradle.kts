@@ -1,7 +1,7 @@
 plugins {
     id("application")
     id("org.openjfx.javafxplugin") version "0.1.0"
-    id("io.freefair.lombok") version "8.0.1"
+    id("io.freefair.lombok") version "8.10"
     id("com.needhamsoftware.unojar") version "1.1.0"
 }
 
@@ -10,7 +10,7 @@ version = "4.0-SNAPSHOT"
 
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(17))
+        languageVersion.set(JavaLanguageVersion.of(21))
     }
 }
 
