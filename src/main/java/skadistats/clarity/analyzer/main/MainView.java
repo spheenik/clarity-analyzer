@@ -10,6 +10,7 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.event.ActionEvent;
@@ -107,8 +108,8 @@ public class MainView implements Initializable {
     private int keptEntityIndex = -1;
     private boolean navigating;
 
-    private final ObjectProperty<FilteredList<ObservableEntity>> filteredEntityList = new SimpleObjectProperty<>();
-    private final ObjectProperty<FilteredList<ObservableEntityProperty>> filteredPropertyList = new SimpleObjectProperty<>();
+    private final ObjectProperty<ObservableList<ObservableEntity>> filteredEntityList = new SimpleObjectProperty<>(FXCollections.emptyObservableList());
+    private final ObjectProperty<ObservableList<ObservableEntityProperty>> filteredPropertyList = new SimpleObjectProperty<>(FXCollections.emptyObservableList());
 
     public void initialize(java.net.URL location, java.util.ResourceBundle resources) {
         preferences = Preferences.userNodeForPackage(this.getClass());
@@ -153,7 +154,7 @@ public class MainView implements Initializable {
         // filtered entity list
         filteredEntityList.bind(createObjectBinding(() -> {
                 var src = replayController.getEntityList();
-                if (src == null) return null;
+                if (src == null) return FXCollections.emptyObservableList();
                 var filteredList = new FilteredList<>(src);
                 filteredList.predicateProperty().bind(createObjectBinding(() -> {
                         var filter = entityNameFilter.getText();
@@ -184,7 +185,7 @@ public class MainView implements Initializable {
         // filtered property list
         filteredPropertyList.bind(createObjectBinding(() -> {
                 var src = entityTable.getSelectionModel().selectedItemProperty().get();
-                if (src == null) return null;
+                if (src == null) return FXCollections.emptyObservableList();
                 var filteredList = new FilteredList<>(src);
                 filteredList.predicateProperty().bind(createObjectBinding(() -> {
                         var filter = propertyNameFilter.getText();
