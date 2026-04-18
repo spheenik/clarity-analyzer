@@ -6,7 +6,7 @@ JavaFX-Application to interactively visualize the raw data of a Dota 2, CSGO, CS
 
 # Requirements
 
-JDK version 17 and above
+JDK version 21 and above
 
 # Building
 

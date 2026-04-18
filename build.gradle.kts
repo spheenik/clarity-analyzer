@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "com.skadistats"
-version = "4.0.1-SNAPSHOT"
+version = "5.0-SNAPSHOT"
 
 java {
     toolchain {
@@ -24,7 +24,7 @@ repositories {
 }
 
 dependencies {
-    implementation("com.skadistats:clarity:4.0.1-SNAPSHOT")
+    implementation("com.skadistats:clarity:5.0.0-SNAPSHOT")
     implementation("com.tobiasdiez:easybind:2.2")
     implementation("ch.qos.logback:logback-classic:1.5.32")
     runtimeOnly("org.openjfx:javafx-graphics:${javafx.version}:win")

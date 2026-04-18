@@ -10,8 +10,8 @@ Deadlock replays. Primary downstream consumer of `clarity`.
 ./gradlew run                 # launch the GUI
 ```
 
-Java **21** toolchain (README still says "17 and above" — stale).
-JavaFX 21 via the `org.openjfx.javafxplugin`. Uses **Lombok** via
+Java **21** toolchain. JavaFX 21 via the `org.openjfx.javafxplugin`.
+Uses **Lombok** via
 `io.freefair.lombok` — be aware when editing (annotations generate
 getters/setters/builders).
 
