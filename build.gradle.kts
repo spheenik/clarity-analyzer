@@ -1,7 +1,7 @@
 plugins {
     id("application")
     id("org.openjfx.javafxplugin") version "0.1.0"
-    id("io.freefair.lombok") version "8.10"
+    id("io.freefair.lombok") version "8.14.4"
     id("com.needhamsoftware.unojar") version "1.1.0"
 }
 
@@ -26,7 +26,7 @@ repositories {
 dependencies {
     implementation("com.skadistats:clarity:4.0.1-SNAPSHOT")
     implementation("com.tobiasdiez:easybind:2.2")
-    implementation("ch.qos.logback:logback-classic:1.5.20")
+    implementation("ch.qos.logback:logback-classic:1.5.32")
     runtimeOnly("org.openjfx:javafx-graphics:${javafx.version}:win")
     runtimeOnly("org.openjfx:javafx-graphics:${javafx.version}:linux")
     runtimeOnly("org.openjfx:javafx-graphics:${javafx.version}:mac")
