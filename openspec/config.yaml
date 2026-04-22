@@ -1,0 +1,9 @@
+schema: spec-driven
+
+# Project context
+context: |
+  JavaFX application for interactively inspecting Dota 2 / CS:GO / CS2 /
+  Deadlock replays. Primary downstream consumer of `clarity`.
+  Java 21, JavaFX 21, Lombok. Composite-build with sibling clarity checkout.
+  Not a throughput tool — interactive scrubbing by one user at a time.
+  Allocation regressions visible as FX-thread hitches, not as benchmarks.
