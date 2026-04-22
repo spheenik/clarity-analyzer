@@ -16,8 +16,11 @@ import org.slf4j.LoggerFactory;
 import skadistats.clarity.analyzer.Analyzer;
 import skadistats.clarity.analyzer.main.ExceptionDialog;
 import skadistats.clarity.analyzer.util.TickHelper;
+import skadistats.clarity.event.Insert;
 import skadistats.clarity.io.Util;
 import skadistats.clarity.processor.entities.UsesEntities;
+import skadistats.clarity.processor.runner.Context;
+import skadistats.clarity.processor.runner.OnInit;
 import skadistats.clarity.source.LiveSource;
 
 import java.io.File;
@@ -29,6 +32,14 @@ import java.util.concurrent.TimeUnit;
 
 @UsesEntities
 public class ReplayController {
+
+    @Insert
+    private Context context;
+
+    @OnInit
+    public void onInit() {
+        TickHelper.context = context;
+    }
 
     private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(r -> {
         var t = new Thread(r);
@@ -74,7 +85,7 @@ public class ReplayController {
                 timer = executor.scheduleAtFixedRate(
                         this::timerTick,
                         0L,
-                        (long)(getRunner().getEngineType().getContextData().getMillisPerTick() * 1000000.0f),
+                        (long)(getRunner().getContext().getMillisPerTick() * 1000000.0f),
                         TimeUnit.NANOSECONDS
                 );
             }
@@ -116,7 +127,6 @@ public class ReplayController {
         try {
             haltIfRunning();
             var r = new PropertySupportRunner(new LiveSource(f.getAbsoluteFile().toString(), 30, TimeUnit.SECONDS));
-            TickHelper.engineType = r.getEngineType();
             var observableEntities = new ObservableEntityList(r.getEngineType());
             runner.setValue(r);
             r.setOnException(t -> Platform.runLater(() -> {

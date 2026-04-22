@@ -1,19 +1,19 @@
 package skadistats.clarity.analyzer.util;
 
-import skadistats.clarity.engine.EngineType;
+import skadistats.clarity.processor.runner.Context;
 
 public class TickHelper {
 
-    public static EngineType engineType;
+    public static Context context;
     public static int currentTick = -1;
 
 
     public static int secondsToTicks(int seconds) {
-        return (int)(seconds * 1000.0f / engineType.getContextData().getMillisPerTick());
+        return (int)(seconds * 1000.0f / context.getMillisPerTick());
     }
 
     public static float millisSince(int previousTick) {
-        return (currentTick - previousTick) * engineType.getContextData().getMillisPerTick();
+        return (currentTick - previousTick) * context.getMillisPerTick();
     }
 
     public static boolean isRecent(int previousTick) {
