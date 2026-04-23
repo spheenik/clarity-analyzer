@@ -12,6 +12,7 @@ import skadistats.clarity.processor.entities.OnEntityPropertyCountChanged;
 import skadistats.clarity.processor.entities.OnEntityUpdated;
 import skadistats.clarity.processor.entities.OnEntityUpdatesCompleted;
 import skadistats.clarity.processor.runner.Context;
+import skadistats.clarity.state.EntityState;
 
 public class ObservableEntityList extends ObservableListBase<ObservableEntity> {
 
@@ -81,8 +82,8 @@ public class ObservableEntityList extends ObservableListBase<ObservableEntity> {
         var i = entity.getIndex();
         var fieldPathsCopy = new FieldPath[num];
         System.arraycopy(fieldPaths, 0, fieldPathsCopy, 0, num);
-        var state = entity.getState().copy();
-        pendingActions.add(() -> entities[i].performUpdate(ctx.getTick(), fieldPathsCopy, state));
+        var delta = EntityState.captureChanged(entity.getState(), fieldPathsCopy, num);
+        pendingActions.add(() -> entities[i].performUpdate(ctx.getTick(), fieldPathsCopy, delta));
     }
 
     @OnEntityPropertyCountChanged
