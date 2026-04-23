@@ -52,11 +52,16 @@
 ## 7. Compile-and-start verification (no-GUI-launch rule)
 
 - [x] 7.1 `./gradlew build` passes against the sibling clarity checkout.
-- [ ] 7.2 `./gradlew packageUnoJar` produces a fat jar.
-  - Pre-existing packaging bug: the uno-jar plugin rejects the three
-    platform-specific `javafx-graphics-21.0.7-{win,linux,mac}.jar`
-    runtimeOnly deps as duplicate entries. Reproduces on `HEAD~`
-    without this change; unrelated. Tracked separately.
+- [x] 7.2 `./gradlew packageUnoJar` produces a fat jar.
+  - Fixed separately alongside this change: the uno-jar plugin
+    (`com.needhamsoftware.unojar:gradle-plugin:1.1.0`) iterates
+    `runtimeClasspath`'s resolved artifacts without deduping by file or
+    `(coord, classifier)`. Two independent triggers removed: the
+    host-platform `javafx-graphics` manual classifier (dropped; the
+    `org.openjfx.javafxplugin` already adds it) and the ancient
+    `javafx-base:14` pulled transitively by `easybind` (excluded; a
+    current `javafx-base` still arrives via `javafx-graphics`). Plugin
+    bug itself remains — filed as a separate workstream.
 - [x] 7.3 Do NOT launch the GUI without user agreement (per `feedback_dtinspector_analyzer_compile_only`). Compile-only verification is the default.
 
 ## 8. Documentation

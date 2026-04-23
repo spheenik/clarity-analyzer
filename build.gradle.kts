@@ -25,11 +25,26 @@ repositories {
 
 dependencies {
     implementation("com.skadistats:clarity:5.0.0-SNAPSHOT")
-    implementation("com.tobiasdiez:easybind:2.2")
+    implementation("com.tobiasdiez:easybind:2.2") {
+        // easybind declares javafx-base:14 (ancient). It's conflict-upgraded
+        // to 21.0.7, but arrives through a second dependency path — the same
+        // artifact is then referenced twice on runtimeClasspath, tripping
+        // packageUnoJar's "duplicate entry" bug. Drop the transitive here;
+        // javafx-controls → javafx-graphics already pulls a newer javafx-base.
+        exclude(group = "org.openjfx", module = "javafx-base")
+    }
     implementation("ch.qos.logback:logback-classic:1.5.32")
-    runtimeOnly("org.openjfx:javafx-graphics:${javafx.version}:win")
-    runtimeOnly("org.openjfx:javafx-graphics:${javafx.version}:linux")
-    runtimeOnly("org.openjfx:javafx-graphics:${javafx.version}:mac")
+    // javafxplugin already adds the host-platform classifier of
+    // javafx-graphics to runtimeClasspath. Adding it a second time here
+    // collides with it during packageUnoJar ("duplicate entry" ZipException).
+    // Declare only the foreign-platform classifiers so the uno-jar stays
+    // cross-platform without double-declaring the host's.
+    val currentOs = org.gradle.internal.os.OperatingSystem.current()
+    listOf("win", "linux", "mac").filterNot { p ->
+        (p == "linux" && currentOs.isLinux) ||
+        (p == "win" && currentOs.isWindows) ||
+        (p == "mac" && currentOs.isMacOsX)
+    }.forEach { runtimeOnly("org.openjfx:javafx-graphics:${javafx.version}:$it") }
 }
 
 application {
