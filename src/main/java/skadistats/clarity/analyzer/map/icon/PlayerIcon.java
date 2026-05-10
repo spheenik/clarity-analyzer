@@ -1,7 +1,6 @@
-package skadistats.clarity.analyzer.map.icon.csgo;
+package skadistats.clarity.analyzer.map.icon;
 
 import javafx.scene.shape.Polygon;
-import skadistats.clarity.analyzer.map.icon.EntityIcon;
 import skadistats.clarity.analyzer.map.position.PositionBinder;
 import skadistats.clarity.analyzer.replay.ObservableEntity;
 

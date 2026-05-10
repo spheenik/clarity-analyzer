@@ -5,7 +5,7 @@ import javafx.beans.value.ObservableValue;
 import skadistats.clarity.analyzer.replay.ObservableEntity;
 import skadistats.clarity.model.Vector;
 
-public class CSGOS2AndDeadlockPositionBinder implements PositionBinder {
+public class Cs2AndDeadlockPositionBinder implements PositionBinder {
 
     private static final Vector ZERO = new Vector(0.0f, 0.0f);
 

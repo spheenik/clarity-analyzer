@@ -2,17 +2,17 @@ package skadistats.clarity.analyzer.map.binding;
 
 import skadistats.clarity.analyzer.map.icon.DefaultIcon;
 import skadistats.clarity.analyzer.map.icon.EntityIcon;
-import skadistats.clarity.analyzer.map.icon.csgo.PlayerIcon;
-import skadistats.clarity.analyzer.map.position.CSGOS1PositionBinder;
+import skadistats.clarity.analyzer.map.icon.PlayerIcon;
+import skadistats.clarity.analyzer.map.position.CsgoPositionBinder;
 import skadistats.clarity.analyzer.map.position.PositionBinder;
 import skadistats.clarity.analyzer.replay.ObservableEntity;
 import skadistats.clarity.analyzer.replay.ObservableEntityList;
 
-public class CSGOS1BindingGenerator implements BindingGenerator {
+public class CsgoBindingGenerator implements BindingGenerator {
 
     private final PositionBinder PB_STANDARD;
-    public CSGOS1BindingGenerator(ObservableEntityList entityList) {
-        PB_STANDARD = new CSGOS1PositionBinder();
+    public CsgoBindingGenerator(ObservableEntityList entityList) {
+        PB_STANDARD = new CsgoPositionBinder();
     }
 
     @Override

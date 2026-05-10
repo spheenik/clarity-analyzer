@@ -5,17 +5,17 @@ import javafx.beans.value.ObservableValue;
 import skadistats.clarity.analyzer.replay.ObservableEntity;
 import skadistats.clarity.model.Vector;
 
-public class CSGOS1PositionBinder implements PositionBinder {
+public class CsgoPositionBinder implements PositionBinder {
 
     private static final Vector ZERO = new Vector(0.0f, 0.0f);
 
     private final String prefix;
 
-    public CSGOS1PositionBinder() {
+    public CsgoPositionBinder() {
         this("");
     }
 
-    public CSGOS1PositionBinder(String prefix) {
+    public CsgoPositionBinder(String prefix) {
         this.prefix = prefix;
     }
 

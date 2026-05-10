@@ -2,20 +2,20 @@ package skadistats.clarity.analyzer.map.binding;
 
 import skadistats.clarity.analyzer.map.icon.DefaultIcon;
 import skadistats.clarity.analyzer.map.icon.EntityIcon;
-import skadistats.clarity.analyzer.map.icon.csgo.PlayerIcon;
-import skadistats.clarity.analyzer.map.position.CSGOS2AndDeadlockPositionBinder;
+import skadistats.clarity.analyzer.map.icon.PlayerIcon;
+import skadistats.clarity.analyzer.map.position.Cs2AndDeadlockPositionBinder;
 import skadistats.clarity.analyzer.map.position.DeferringPositionBinder;
 import skadistats.clarity.analyzer.map.position.PositionBinder;
 import skadistats.clarity.analyzer.replay.ObservableEntity;
 import skadistats.clarity.analyzer.replay.ObservableEntityList;
 
-public class CSGOS2BindingGenerator implements BindingGenerator {
+public class Cs2BindingGenerator implements BindingGenerator {
 
     private final PositionBinder PB_STANDARD;
     private final PositionBinder PB_PLAYER;
 
-    public CSGOS2BindingGenerator(ObservableEntityList entityList) {
-        PB_STANDARD = new CSGOS2AndDeadlockPositionBinder();
+    public Cs2BindingGenerator(ObservableEntityList entityList) {
+        PB_STANDARD = new Cs2AndDeadlockPositionBinder();
         PB_PLAYER = new DeferringPositionBinder(entityList, PB_STANDARD, "m_hPawn");
     }
 
