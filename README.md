@@ -13,10 +13,10 @@ JDK version 21 and above
 Depending on your OS, issue the following command in the base project folder
 
 #### Windows
-`gradlew.bat packageUnoJar`
+`gradlew.bat shadowJar`
 
 #### Linux / Mac
-`./gradlew packageUnoJar`
+`./gradlew shadowJar`
 
 # Running
 
