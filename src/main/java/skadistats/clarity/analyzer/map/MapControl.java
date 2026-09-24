@@ -89,7 +89,11 @@ public class MapControl extends Region {
                 continue;
             }
             mapEntities[from + i] = icon;
-            iconContainer.icons.getChildren().add(icon.getShape());
+            if (icon.isBackground()) {
+                iconContainer.icons.getChildren().add(0, icon.getShape());
+            } else {
+                iconContainer.icons.getChildren().add(icon.getShape());
+            }
         }
     }
 

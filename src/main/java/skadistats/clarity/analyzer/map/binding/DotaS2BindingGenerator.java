@@ -5,11 +5,13 @@ import javafx.beans.binding.IntegerBinding;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ObservableValue;
+import skadistats.clarity.analyzer.map.dota.DotaTrees;
 import skadistats.clarity.analyzer.map.icon.DefaultIcon;
 import skadistats.clarity.analyzer.map.icon.EntityIcon;
 import skadistats.clarity.analyzer.map.icon.dota.BuildingIcon;
 import skadistats.clarity.analyzer.map.icon.dota.CameraIcon;
 import skadistats.clarity.analyzer.map.icon.dota.PointingHeroIcon;
+import skadistats.clarity.analyzer.map.icon.dota.TreesIcon;
 import skadistats.clarity.analyzer.map.position.DOTAS2PositionBinder;
 import skadistats.clarity.analyzer.map.position.PositionBinder;
 import skadistats.clarity.analyzer.replay.ObservableEntity;
@@ -22,12 +24,14 @@ public class DotaS2BindingGenerator implements BindingGenerator {
 
     private final PositionBinder PB_STANDARD;
     private final EngineType engineType;
+    private final ObservableEntityList entityList;
 
     private final ObjectProperty<int[]> selectedHeroHandles = new SimpleObjectProperty<>(new int[10]);
 
     public DotaS2BindingGenerator(ObservableEntityList entityList) {
         PB_STANDARD = new DOTAS2PositionBinder();
         engineType = entityList.getEngineType();
+        this.entityList = entityList;
     }
 
     @Override
@@ -36,6 +40,9 @@ public class DotaS2BindingGenerator implements BindingGenerator {
         if (name.equals("CDOTA_PlayerResource")) {
             bindPlayerResource(oe);
             return null;
+        } else if (name.equals("CDOTA_DataSpectator")) {
+            var trees = DotaTrees.forServerProtocol(entityList.getServerProtocol());
+            return trees.isEmpty() ? null : new TreesIcon(PB_STANDARD, oe, trees);
         } else if (name.equals("CDOTAPlayer") || name.equals("CDOTAPlayerController")) {
             return new CameraIcon(PB_STANDARD, oe);
         } else if (name.equals("CDOTA_BaseNPC_Barracks")) {

@@ -8,6 +8,15 @@ import skadistats.clarity.model.Vector;
 public class DOTAS2PositionBinder implements PositionBinder {
 
     private static final Vector ZERO = new Vector(0.0f, 0.0f, 0.0f);
+    private static final float WORLD_ORIGIN = 16384.0f;
+
+    public static float mapXForWorld(float worldX) {
+        return worldX + WORLD_ORIGIN;
+    }
+
+    public static float mapYForWorld(float worldY) {
+        return -(worldY + WORLD_ORIGIN);
+    }
 
     @Override
     public boolean hasPosition(ObservableEntity oe) {

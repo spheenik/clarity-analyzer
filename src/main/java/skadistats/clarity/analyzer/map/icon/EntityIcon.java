@@ -5,9 +5,9 @@ import javafx.beans.binding.FloatBinding;
 import javafx.beans.binding.IntegerBinding;
 import javafx.beans.binding.LongBinding;
 import javafx.beans.binding.ObjectBinding;
+import javafx.scene.Node;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
-import javafx.scene.shape.Shape;
 import skadistats.clarity.analyzer.map.position.PositionBinder;
 import skadistats.clarity.analyzer.replay.ObservableEntity;
 
@@ -16,7 +16,7 @@ import static javafx.beans.binding.Bindings.selectInteger;
 import static javafx.beans.binding.Bindings.selectLong;
 
 
-public abstract class EntityIcon<T extends Shape> {
+public abstract class EntityIcon<T extends Node> {
 
     private final Color[] PLAYER_COLORS = {
             Color.web("#3272f6"),
@@ -40,6 +40,10 @@ public abstract class EntityIcon<T extends Shape> {
     }
 
     public abstract T getShape();
+
+    public boolean isBackground() {
+        return false;
+    }
 
     protected FloatBinding getMapX() {
         return selectFloat(pb.getMapX(oe));

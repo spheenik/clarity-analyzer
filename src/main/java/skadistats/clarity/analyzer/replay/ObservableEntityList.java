@@ -11,8 +11,10 @@ import skadistats.clarity.processor.entities.OnEntityDeleted;
 import skadistats.clarity.processor.entities.OnEntityPropertyCountChanged;
 import skadistats.clarity.processor.entities.OnEntityUpdated;
 import skadistats.clarity.processor.entities.OnEntityUpdatesCompleted;
+import skadistats.clarity.processor.reader.OnMessage;
 import skadistats.clarity.processor.runner.Context;
 import skadistats.clarity.state.EntityState;
+import skadistats.clarity.wire.shared.demo.proto.DemoNetMessages;
 
 public class ObservableEntityList extends ObservableListBase<ObservableEntity> {
 
@@ -21,6 +23,7 @@ public class ObservableEntityList extends ObservableListBase<ObservableEntity> {
     private final EngineType engineType;
     private final PendingActionList pendingActions = new PendingActionList("pendingActions");
     private ObservableEntity[] entities;
+    private volatile int serverProtocol = -1;
 
     public ObservableEntityList(EngineType engineType) {
         this.engineType = engineType;
@@ -46,6 +49,15 @@ public class ObservableEntityList extends ObservableListBase<ObservableEntity> {
 
     public EngineType getEngineType() {
         return engineType;
+    }
+
+    public int getServerProtocol() {
+        return serverProtocol;
+    }
+
+    @OnMessage(DemoNetMessages.CSVCMsg_ServerInfo.class)
+    protected void onServerInfo(DemoNetMessages.CSVCMsg_ServerInfo message) {
+        serverProtocol = message.getProtocol();
     }
 
     public ObservableEntity byHandle(Integer handle) {
