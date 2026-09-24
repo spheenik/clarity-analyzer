@@ -31,6 +31,7 @@ dependencies {
         exclude(group = "org.openjfx", module = "javafx-base")
     }
     implementation("ch.qos.logback:logback-classic:1.5.32")
+    implementation("io.airlift:aircompressor:2.0.3")
     // javafxplugin already adds the host-platform classifier of
     // javafx-graphics to runtimeClasspath. Declare only the foreign-platform
     // classifiers so the fat jar stays cross-platform without
