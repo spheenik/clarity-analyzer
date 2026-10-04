@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The analyzer's FX side keeps one persistent `EntityState` per entity, seeded from a full copy at creation and updated in place from sparse clarity `StateDelta`s captured on the parse thread, instead of copying the whole entity state on every update. Primitive property bindings read `int` / `long` / `float` values from that state without boxing.
+The analyzer's FX side keeps one persistent `EntityState` per entity, seeded from a full copy at creation and updated in place from sparse clarity `StateDelta`s captured on the parse thread, instead of copying the whole entity state on every update.
 
 ## Requirements
 ### Requirement: Persistent FX-side entity state
@@ -53,23 +53,3 @@ Each `ObservableEntity` SHALL hold a long-lived `State` instance (`fxState`) own
 
 - **WHEN** an update changes `fpA` but not `fpB`
 - **THEN** a binding for `fpB` SHALL NOT be invalidated by this update
-
-### Requirement: Primitive-typed JavaFX binding accessors
-
-`ObservableEntity` SHALL expose primitive-specialized binding factories: `getIntPropertyBinding(String name, int defaultValue) : ReadOnlyIntegerProperty`, `getLongPropertyBinding(String name, long defaultValue) : ReadOnlyLongProperty`, `getFloatPropertyBinding(String name, float defaultValue) : ReadOnlyFloatProperty`. These bindings SHALL read values from `fxState` via the primitive clarity accessors (`getInt` / `getLong` / `getFloat`) without boxing.
-
-#### Scenario: Int binding returns the current primitive value
-
-- **WHEN** a consumer registers `oe.getIntPropertyBinding("m_iHealth", 0)` and the entity's `m_iHealth` is currently `83`
-- **THEN** the returned `ReadOnlyIntegerProperty`'s `.get()` SHALL return `83` as an `int`, without an intermediate `Integer` allocation
-
-#### Scenario: Unresolvable field path returns default
-
-- **WHEN** a consumer registers `oe.getIntPropertyBinding("m_nonexistent", -1)` and the field path cannot be resolved on the entity's class
-- **THEN** the returned read-only property SHALL report `-1` for its value and never invalidate
-
-#### Scenario: Generic binding API remains available
-
-- **WHEN** a consumer calls `oe.getPropertyBinding(Integer.class, "m_iHealth", 0)`
-- **THEN** the call SHALL still return an `ObservableValue<Integer>` as before — existing call sites do not require migration
-

@@ -58,13 +58,3 @@ updates arrive as sparse `StateDelta`s and are merged in place via
 `EntityState.applyFrom`. No per-tick full-state copy. Parse thread
 never reads or writes `fxState` — only the immutable delta crosses the
 thread boundary (via the pending-action queue).
-
-Primitive binding accessors on `ObservableEntity` —
-`getIntPropertyBinding(name, int default)`,
-`getLongPropertyBinding(name, long default)`,
-`getFloatPropertyBinding(name, float default)` — produce JavaFX
-primitive-specialized `ReadOnly{Integer,Long,Float}Property` that read
-off `fxState` through clarity's primitive state accessors, no boxing
-at the value-read boundary. The generic
-`getPropertyBinding(Class<T>, name, default)` stays for `Vector` and
-other reference types.

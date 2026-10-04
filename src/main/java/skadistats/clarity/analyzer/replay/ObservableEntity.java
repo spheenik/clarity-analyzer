@@ -4,12 +4,8 @@ import com.tobiasdiez.easybind.EasyBind;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import javafx.beans.binding.ObjectBinding;
-import javafx.beans.property.ReadOnlyFloatProperty;
-import javafx.beans.property.ReadOnlyFloatWrapper;
 import javafx.beans.property.ReadOnlyIntegerProperty;
 import javafx.beans.property.ReadOnlyIntegerWrapper;
-import javafx.beans.property.ReadOnlyLongProperty;
-import javafx.beans.property.ReadOnlyLongWrapper;
 import javafx.beans.property.ReadOnlyStringProperty;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.beans.property.SimpleIntegerProperty;
@@ -58,7 +54,6 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
      * never reads or writes this field.
      */
     private EntityState fxState;
-    private List<Object> primitiveBindingRetainers;
 
     public ObservableEntity(int index) {
         this(index, 0, null, null);
@@ -324,61 +319,6 @@ public class ObservableEntity extends ObservableListBase<ObservableEntityPropert
                 .selectObject(ObservableEntityProperty::valueProperty)
                 .map(propertyClass::cast)
                 .orElse(defaultValue);
-    }
-
-    private ObservableValue<Object> primitiveSource(FieldPath fp) {
-        var propertyBinding = getPropertyBinding(fp);
-        var source = EasyBind.select(propertyBinding).selectObject(ObservableEntityProperty::valueProperty);
-        if (primitiveBindingRetainers == null) {
-            primitiveBindingRetainers = new ArrayList<>();
-        }
-        primitiveBindingRetainers.add(source);
-        return source;
-    }
-
-    /**
-     * FX-thread-only primitive-typed read of {@code name} from {@link #fxState}.
-     * The returned property is invalidated on the same path as the generic
-     * {@link #getPropertyBinding(Class, String, Object)} accessor, but
-     * {@link ReadOnlyIntegerProperty#get} reads an {@code int} directly from
-     * clarity's primitive state accessors — no boxing.
-     */
-    public ReadOnlyIntegerProperty getIntPropertyBinding(String name, int defaultValue) {
-        var fp = getFieldPathForName(name);
-        if (fp == null) {
-            return new ReadOnlyIntegerWrapper(defaultValue).getReadOnlyProperty();
-        }
-        var wrapper = new ReadOnlyIntegerWrapper(fxState != null ? EntityState.getInt(fxState, fp) : defaultValue);
-        primitiveSource(fp).addListener((obs, o, n) -> wrapper.set(EntityState.getInt(fxState, fp)));
-        return wrapper.getReadOnlyProperty();
-    }
-
-    /**
-     * FX-thread-only primitive-typed {@code long} accessor. See
-     * {@link #getIntPropertyBinding(String, int)}.
-     */
-    public ReadOnlyLongProperty getLongPropertyBinding(String name, long defaultValue) {
-        var fp = getFieldPathForName(name);
-        if (fp == null) {
-            return new ReadOnlyLongWrapper(defaultValue).getReadOnlyProperty();
-        }
-        var wrapper = new ReadOnlyLongWrapper(fxState != null ? EntityState.getLong(fxState, fp) : defaultValue);
-        primitiveSource(fp).addListener((obs, o, n) -> wrapper.set(EntityState.getLong(fxState, fp)));
-        return wrapper.getReadOnlyProperty();
-    }
-
-    /**
-     * FX-thread-only primitive-typed {@code float} accessor. See
-     * {@link #getIntPropertyBinding(String, int)}.
-     */
-    public ReadOnlyFloatProperty getFloatPropertyBinding(String name, float defaultValue) {
-        var fp = getFieldPathForName(name);
-        if (fp == null) {
-            return new ReadOnlyFloatWrapper(defaultValue).getReadOnlyProperty();
-        }
-        var wrapper = new ReadOnlyFloatWrapper(fxState != null ? EntityState.getFloat(fxState, fp) : defaultValue);
-        primitiveSource(fp).addListener((obs, o, n) -> wrapper.set(EntityState.getFloat(fxState, fp)));
-        return wrapper.getReadOnlyProperty();
     }
 
     @Override

@@ -1,6 +1,6 @@
 package skadistats.clarity.analyzer.replay;
 
-import javafx.beans.property.ReadOnlyIntegerProperty;
+import javafx.beans.value.ObservableValue;
 import org.testng.SkipException;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -67,10 +67,10 @@ public class SparseStateDeltaUpdatesTest {
     }
 
     @Test
-    public void intPropertyBindingFollowsMergedValue() {
+    public void propertyBindingFollowsMergedValue() {
         assertNotNull(mirror.healthBinding, "no hero found to bind m_iHealth");
         assertTrue(mirror.healthBindingChanges > 10, "binding changes: " + mirror.healthBindingChanges);
-        assertEquals(mirror.healthBinding.get(), mirror.trackedHero.getInt("m_iHealth"));
+        assertEquals(mirror.healthBinding.getValue(), Integer.valueOf(mirror.trackedHero.getInt("m_iHealth")));
     }
 
     public static class Mirror {
@@ -85,7 +85,7 @@ public class SparseStateDeltaUpdatesTest {
         long threeFieldUpdates;
 
         Entity trackedHero;
-        ReadOnlyIntegerProperty healthBinding;
+        ObservableValue<Integer> healthBinding;
         int healthBindingChanges;
 
         @OnEntityCreated
@@ -94,7 +94,7 @@ public class SparseStateDeltaUpdatesTest {
             mirrors.put(e.getIndex(), oe);
             if (healthBinding == null && e.getDtClass().getDtName().startsWith("CDOTA_Unit_Hero_")) {
                 trackedHero = e;
-                healthBinding = oe.getIntPropertyBinding("m_iHealth", -1);
+                healthBinding = oe.getPropertyBinding(Integer.class, "m_iHealth", -1);
                 healthBinding.addListener((obs, o, n) -> healthBindingChanges++);
             }
         }
