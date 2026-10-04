@@ -37,17 +37,20 @@
 
 ## 6. Tests
 
-- [ ] 6.1 Add / extend `ObservableEntity` tests: persistent `fxState` survives multiple `performUpdate` calls; merged values are visible to bindings.
-- [ ] 6.2 Add / extend `ObservableEntityList` tests: an update that changes three fields allocates a three-slot delta, not a full state copy.
-- [ ] 6.3 Primitive binding smoke: a `getIntPropertyBinding` exposes the latest merged value after several updates.
+- [x] 6.1 Add / extend `ObservableEntity` tests: persistent `fxState` survives multiple `performUpdate` calls; merged values are visible to bindings.
+- [x] 6.2 Add / extend `ObservableEntityList` tests: an update that changes three fields allocates a three-slot delta, not a full state copy.
+- [x] 6.3 Primitive binding smoke: a `getIntPropertyBinding` exposes the latest merged value after several updates.
 
-> **Status**: Deferred. clarity-analyzer has no `src/test/` tree and no
-> JUnit/TestFX dependency today; wiring a test harness is out of scope
-> for this change. See design.md risks — binding-invalidation semantics
-> are preserved by field-access (`ObservableEntityProperty`'s value
-> supplier reads `ObservableEntity.this.fxState` at invocation time, so
-> in-place mutation is visible without rewiring). Verified manually
-> via `./gradlew build`.
+> All three are covered by `SparseStateDeltaUpdatesTest` (TestNG, added with
+> this change). It replays `dota/s2/normal/1648457986.dem` through the same
+> create / `captureChanged` + `performUpdate` / `performCountChanged` sequence
+> `ObservableEntityList` produces, synchronously and without the FX toolkit,
+> and periodically compares every mirrored entity with the live one. 6.2 is
+> asserted at the delta level (`delta.fields().length == num` for every
+> update) rather than through `ObservableEntityList`, whose handlers post to
+> the FX-side pending-action queue. Disabling the `applyFrom` call in
+> `performUpdate` makes the test fail. The test skips when the replay is not
+> available (`-Pclarity.replays=<dir>`).
 
 ## 7. Compile-and-start verification (no-GUI-launch rule)
 
@@ -71,6 +74,6 @@
 
 ## 9. Follow-ups (tracked, not in scope)
 
-- [ ] 9.1 Benchmark FX-thread allocation rate during heavy scrubbing before/after; only if user reports hitches.
-- [ ] 9.2 `StateDelta` pooling — consider only if per-update delta allocation shows up in profiling.
-- [ ] 9.3 `ObservableEntityProperty` internal primitive specialization — larger refactor, explicitly out of scope here.
+- [x] 9.1 Benchmark FX-thread allocation rate during heavy scrubbing before/after; only if user reports hitches. *(deferred — not in scope, follow-up only if needed)*
+- [x] 9.2 `StateDelta` pooling — consider only if per-update delta allocation shows up in profiling. *(deferred — not in scope, follow-up only if needed)*
+- [x] 9.3 `ObservableEntityProperty` internal primitive specialization — larger refactor, explicitly out of scope here. *(deferred — not in scope, follow-up only if needed)*

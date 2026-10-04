@@ -32,6 +32,7 @@ dependencies {
     }
     implementation("ch.qos.logback:logback-classic:1.5.32")
     implementation("io.airlift:aircompressor:2.0.3")
+    testImplementation("org.testng:testng:7.11.0")
     // javafxplugin already adds the host-platform classifier of
     // javafx-graphics to runtimeClasspath. Declare only the foreign-platform
     // classifiers so the fat jar stays cross-platform without
@@ -42,6 +43,11 @@ dependencies {
         (p == "win" && currentOs.isWindows) ||
         (p == "mac" && currentOs.isMacOsX)
     }.forEach { runtimeOnly("org.openjfx:javafx-graphics:${javafx.version}:$it") }
+}
+
+tasks.named<Test>("test") {
+    useTestNG()
+    systemProperty("clarity.replays", providers.gradleProperty("clarity.replays").getOrElse("/home/spheenik/projects/replays"))
 }
 
 application {
