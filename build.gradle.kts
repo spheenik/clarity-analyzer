@@ -24,7 +24,7 @@ repositories {
 }
 
 dependencies {
-    implementation("com.skadistats:clarity:5.0.0")
+    implementation("com.skadistats:clarity:5.0.1")
     implementation("com.tobiasdiez:easybind:2.2") {
         // easybind declares javafx-base:14 (ancient). Drop the transitive here;
         // javafx-controls → javafx-graphics already pulls a newer javafx-base.
