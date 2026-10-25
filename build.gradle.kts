@@ -47,7 +47,7 @@ dependencies {
 
 tasks.named<Test>("test") {
     useTestNG()
-    systemProperty("clarity.replays", providers.gradleProperty("clarity.replays").getOrElse("/home/spheenik/projects/replays"))
+    systemProperty("clarity.replays", providers.gradleProperty("clarity.replays").getOrElse(System.getProperty("user.home") + "/projects/clarity/replays"))
 }
 
 application {
